@@ -62,8 +62,9 @@ if __name__ == '__main__':
             imm_points.append(imm.get_points())
             # imm.show()
 
+        imm_points = np.array(imm_points)
         mean_values = build_mean_aam(np.array(imm_points))
-        pca(imm_points, mean_values)
+        V, S = pca(imm_points, mean_values)
 
         # show immpoints
         imm = IMMPoints(points=mean_values)
