@@ -9,3 +9,7 @@ data/imm_face_db: data/imm_face_db.tar.gz
 
 data/imm_face_db.tar.gz:
 	(cd data; wget http://www.imm.dtu.dk/~aam/datasets/imm_face_db.tar.gz)
+
+test:
+	py.test -f src/*_test.py
+

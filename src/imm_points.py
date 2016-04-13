@@ -55,12 +55,11 @@ class IMMPoints():
                         cv2.FONT_HERSHEY_SIMPLEX, .5, (100, 0, 255))
             cv2.circle(img, tuple(p), 3, color=(0, 255, 100))
 
-    def show_on_img(self, img):
+    def show_on_img(self, img, window_name='image'):
         self.draw_triangles(img, self.points)
-        cv2.imshow('image', img)
-        cv2.waitKey(0)
+        cv2.imshow(window_name, img)
 
-    def show(self):
+    def show(self, window_name='image'):
         """show the image and datapoints on the image"""
         assert(len(self.points) > 0)
         assert(len(self.filename) > 0)
@@ -68,9 +67,7 @@ class IMMPoints():
         img = cv2.imread('data/imm_face_db/' + self.filename)
 
         self.draw_triangles(img, self.points)
-
-        cv2.imshow('image', img)
-        cv2.waitKey(0)
+        cv2.imshow(window_name, img)
 
 
 def add_parser_options():

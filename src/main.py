@@ -1,8 +1,16 @@
-from pca import pca
-import numpy as np
+import copy
 import argparse
 
+import cv2
+import numpy as np
+
+from pca import pca, reconstruct
+from aam import build_mean_aam
 from imm_points import IMMPoints
+
+
+def nothing(_):
+    pass
 
 
 def add_parser_options():
@@ -16,39 +24,12 @@ def add_parser_options():
     return parser
 
 
-def build_mean_aam(imm_points):
-    """ construct a mean from a matrix of x,y values
-    Args:
-        imm_points(numpy array)that follows the follwing structure:
-    observations:
-           0. [[x_0_0, y_0_0], ... , [x_0_m, y_0_m]],
-           1. [[x_1_0, y_1_0], ... , [x_1_m, y_1_m]],
-           2. [[x_2_0, y_2_0], ... , [x_2_m, y_2_m]],
-           3. [[x_3_0, y_3_0], ... , [x_3_m, y_3_m]]
+def init_eigenvalue_trackbars(n_components, s):
+    cv2.namedWindow('eigenvalues')
 
-               ....           ....       .m...
+    for i in range(n_components):
+        cv2.createTrackbar('{}'.format(i), 'eigenvalues', 0, 1000, nothing)
 
-           n. [[x_4_0, y_4_0], ... , [x_n_m, y_n_m]]
-
-    Returns mean_values (numpy array)
-        This vector containts the mean values of the corresponding column, like so:
-           0. [[x_0_0, y_0_0], ... , [x_0_k, y_0_k]],
-           1. [[x_1_0, y_1_0], ... , [x_1_k, y_1_k]],
-           2. [[x_2_0, y_2_0], ... , [x_2_k, y_2_k]],
-           3. [[x_3_0, y_3_0], ... , [x_3_k, y_3_k]]
-
-               ....           ....       .....
-
-           n. [[x_4_0, y_4_0], ... , [x_n_k, y_n_k]]
-
-        mean. [[x_mean_0, y_mean_0], ... [x_mean_n, y_mean_n]]
-    """
-    mean_values = []
-
-    for i in range(imm_points.shape[1]):
-        mean_values.append(np.mean(imm_points[:, i], axis=0))
-
-    return np.array(mean_values)
 
 if __name__ == '__main__':
     parser = add_parser_options()
@@ -63,10 +44,36 @@ if __name__ == '__main__':
             # imm.show()
 
         imm_points = np.array(imm_points)
-        mean_values = build_mean_aam(np.array(imm_points))
-        V, S = pca(imm_points, mean_values)
 
-        # show immpoints
-        imm = IMMPoints(points=mean_values)
-        img = np.full((480, 640, 3), 255, np.uint8)
-        imm.show_on_img(img)
+        mean_values = build_mean_aam(np.array(imm_points))
+        U, s, Vt = pca(imm_points, mean_values)
+
+        index = 0
+        cv2.namedWindow('index')
+        cv2.createTrackbar('index', 'index', index, len(args.asf) - 1, nothing)
+
+        n_components = 5
+        init_eigenvalue_trackbars(n_components, s)
+
+        s_copy = copy.copy(s)
+
+        while True:
+            projection = reconstruct(U, s_copy, Vt, n_components)
+            X_reconstructed = projection[index].reshape((58, 2)) + mean_values
+
+            imm = IMMPoints(points=X_reconstructed)
+            img = np.full((480, 640, 3), 255, np.uint8)
+            imm.show_on_img(img)
+
+            for i in range(n_components):
+                s_copy[i] = s[i] * (cv2.getTrackbarPos(str(i), 'eigenvalues') / 10.0)
+
+            index = cv2.getTrackbarPos('index', 'index')
+            imm = IMMPoints(filename=args.asf[index])
+            imm.show(window_name='original')
+
+            k = cv2.waitKey(1) & 0xFF
+            if k == 27:
+                break
+
+        cv2.destroyAllWindows()
