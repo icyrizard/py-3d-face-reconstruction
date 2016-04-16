@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def build_mean_aam(imm_points):
+def get_mean(imm_points):
     """ construct a mean from a matrix of x,y values
     Args:
         imm_points(numpy array) that follows the following structure:

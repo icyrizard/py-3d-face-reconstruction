@@ -70,6 +70,66 @@ class IMMPoints():
         cv2.imshow(window_name, img)
 
 
+def flatten_feature_vectors(data):
+    """
+    Flattens the feature vectors inside a ndarray
+
+    Example:
+        input:
+        [
+            [[1, 2], [3, 4], [5, 6]],
+            ...
+            [[1, 2], [3, 4], [5, 6]]
+        ]
+        output:
+        [
+            [1, 2, 3, 4, 5, 6],
+            ...
+            [1, 2, 3, 4, 5, 6]
+        ]
+
+    Args:
+        data (numpy array): array of feature vectors
+
+    return:
+        array: (numpy array): array flattened feature vectors
+
+    """
+    flattened = []
+
+    rows, _, _ = data.shape
+
+    for i in range(rows):
+        flattened.append(np.ndarray.flatten(data[i]))
+
+    return np.array(flattened)
+
+
+def build_feature_vectors(files, flattened=False):
+    """
+    Gets the aam points from the files and appends them seperately to one
+    array.
+
+    Args:
+        files (list): list files
+
+    return:
+        list: list of feature vectors
+    """
+    imm_points = []
+
+    for f in files:
+        imm = IMMPoints(filename=f)
+        imm_points.append(imm.get_points())
+
+    imm_points = np.array(imm_points)
+
+    if flattened:
+        imm_points = flatten_feature_vectors(imm_points)
+
+    return imm_points
+
+
 def add_parser_options():
     parser = argparse.ArgumentParser(description='IMMPoints tool')
 
