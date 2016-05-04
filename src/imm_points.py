@@ -57,7 +57,6 @@ class IMMPoints():
 
     def show_on_img(self, img, window_name='image'):
         self.draw_triangles(img, self.points)
-        cv2.imshow(window_name, img)
 
     def show(self, window_name='image'):
         """show the image and datapoints on the image"""
@@ -67,7 +66,6 @@ class IMMPoints():
         img = cv2.imread('data/imm_face_db/' + self.filename)
 
         self.draw_triangles(img, self.points)
-        cv2.imshow(window_name, img)
 
 
 def flatten_feature_vectors(data):
