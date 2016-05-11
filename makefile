@@ -37,5 +37,4 @@ show_reconstruction:
 		--n_components 6
 
 test:
-	py.test -f src/*_test.py
-
+	python -m py.test -f src/*_test.py

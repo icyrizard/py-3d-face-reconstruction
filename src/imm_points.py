@@ -1,7 +1,9 @@
 from matplotlib.tri import Triangulation
+
 import cv2
 import numpy as np
 import argparse
+import os
 
 
 class IMMPoints():
@@ -21,12 +23,16 @@ class IMMPoints():
     def get_points(self):
         return self.points
 
+    def get_image(self):
+        cv2.imread(self.image_file)
+        return cv2.imread(self.image_file)
+
     def import_file(self, filename):
         with open(filename, 'r') as f:
             lines = f.readlines()
-            # store the filename we've got
-            self.filename = lines[-1].strip()
             data = lines[16:74]
+            dir_name = os.path.dirname(filename)
+            self.image_file = "{}/{}".format(dir_name, lines[-1].strip())
 
             for d in data:
                 self.points.append(d.split()[2:4])
@@ -34,7 +40,6 @@ class IMMPoints():
         self.points = np.asarray(self.points, dtype='f')
 
     def draw_triangles(self, img, points):
-        assert(len(self.points) > 0)
         h, w, c = img.shape
 
         points[:, 0] = points[:, 0] * w
@@ -63,69 +68,19 @@ class IMMPoints():
         assert(len(self.points) > 0)
         assert(len(self.filename) > 0)
 
-        img = cv2.imread('data/imm_face_db/' + self.filename)
+        img = self.get_image()
 
         self.draw_triangles(img, self.points)
 
 
-def flatten_feature_vectors(data):
-    """
-    Flattens the feature vectors inside a ndarray
-
-    Example:
-        input:
-        [
-            [[1, 2], [3, 4], [5, 6]],
-            ...
-            [[1, 2], [3, 4], [5, 6]]
-        ]
-        output:
-        [
-            [1, 2, 3, 4, 5, 6],
-            ...
-            [1, 2, 3, 4, 5, 6]
-        ]
-
-    Args:
-        data (numpy array): array of feature vectors
-
-    return:
-        array: (numpy array): array flattened feature vectors
-
-    """
-    flattened = []
-
-    rows, _, _ = data.shape
-
-    for i in range(rows):
-        flattened.append(np.ndarray.flatten(data[i]))
-
-    return np.array(flattened)
-
-
-def build_feature_vectors(files, flattened=False):
-    """
-    Gets the aam points from the files and appends them seperately to one
-    array.
-
-    Args:
-        files (list): list files
-
-    return:
-        list: list of feature vectors
-    """
-    imm_points = []
+def get_imm_landmarks(files):
+    points = []
 
     for f in files:
         imm = IMMPoints(filename=f)
-        imm_points.append(imm.get_points())
+        points.append(imm.get_points())
 
-    imm_points = np.array(imm_points)
-
-    if flattened:
-        imm_points = flatten_feature_vectors(imm_points)
-
-    return imm_points
+    return np.asarray(points)
 
 
 def add_parser_options():

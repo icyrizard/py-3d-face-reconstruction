@@ -2,7 +2,6 @@ import kivy
 kivy.require('1.0.7')
 
 import numpy as np
-from matplotlib.tri import Triangulation
 
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
@@ -18,9 +17,11 @@ from kivy.graphics.context_instructions import Color
 from functools import partial
 from math import cos, sin, pi
 
-from imm_points import IMMPoints, build_feature_vectors, \
-    flatten_feature_vectors
+import imm_points as imm
+#import IMMPoints, build_feature_vectors, \
+#    flatten_feature_vectors
 import pca
+import aam
 
 
 class ImageCanvas(Widget):
@@ -34,12 +35,13 @@ class ImageCanvas(Widget):
             self.image = Image(pos=self.pos, size=self.size, source=self.filename_image)
             self.mesh = Mesh(mode='triangle_fan')
             self.triangles = InstructionGroup()
-            self.middle_group = InstructionGroup()
+            self.outline = InstructionGroup()
 
         self.bind(pos=self.update_rect, size=self.update_rect)
 
     def get_rendered_size(self):
-        """get the rendered size of the image
+        """
+        get the rendered size of the image
         Returns:
             (tuple) width, height in pixels
         """
@@ -73,7 +75,7 @@ class ImageCanvas(Widget):
         self.triangles.clear()
 
         image_width, image_height = self.get_rendered_size()
-        triangles = Triangulation(reconstructed[:, 0], reconstructed[:, 1]).triangles
+        triangles = aam.get_triangles(reconstructed[:, 0], reconstructed[:, 1])
 
         for tri in triangles:
             self.triangles.add(Color(0, 0, 1, 1))
@@ -92,7 +94,6 @@ class ImageCanvas(Widget):
             self.triangles.add(Line(circle=(x[2], y[2], 3)))
 
         self.canvas.add(self.triangles)
-        self.canvas.add(self.middle_group)
         self.canvas.ask_update()
 
     def build_mesh(self, reconstructed):
@@ -109,8 +110,8 @@ class ImageCanvas(Widget):
         xy_vertices = np.array(xy_vertices)
 
         indices = []
-        indices = Triangulation(xy_vertices[:, 0], xy_vertices[:, 1]).triangles
-        indices = np.ndarray.flatten(indices)[:30]
+        indices = aam.get_triangles(xy_vertices[:, 0], xy_vertices[:, 1])
+        indices = np.ndarray.flatten(indices)
 
         self.mesh.vertices = vertices
         self.mesh.indices = indices
@@ -126,6 +127,7 @@ class RootWidget(BoxLayout):
         self.n_components = kwargs['args'].n_components
         self.multipliers = np.ones(self.Vt.shape[1])
 
+        # slider index
         self.index = 0
         self.filename = ''
 
@@ -137,10 +139,11 @@ class RootWidget(BoxLayout):
         n_components_slider.value = self.n_components
         n_components_slider.bind(value=self.update_n_components)
 
-        self.landmark_list = build_feature_vectors(self.images, flattened=True)
         self.ids['image_viewer'].bind(size=self.on_resize)
-
         box_layout = self.ids['eigenvalues']
+
+        self.landmark_list = aam.build_feature_vectors(self.images,
+                imm.get_imm_landmarks, flattened=True)
 
         for c in range(self.n_components):
             slider = Slider(min=-10, max=10, value=0, id=str(c))
@@ -149,7 +152,6 @@ class RootWidget(BoxLayout):
 
     def reset_sliders(self):
         self.multipliers = np.ones(self.Vt.shape[1])
-
         box_layout = self.ids['eigenvalues']
 
         for c in box_layout.children:
@@ -164,7 +166,7 @@ class RootWidget(BoxLayout):
             n_components=self.n_components
         )
 
-        reconstruction = reconstruction.reshape((58, 2))
+        reconstruction = reconstruction.reshape((-1, 2))
 
         self.ids['image_viewer'].update_rect()
         self.ids['image_viewer'].update_image(self.filename)
@@ -199,7 +201,8 @@ class ReconstructApp(App):
         super(ReconstructApp, self).__init__(**kwargs)
 
     def build(self):
-        return RootWidget(args=self.args, eigen_vectors=self.eigen_vectors,
+        return RootWidget(
+            args=self.args, eigen_vectors=self.eigen_vectors,
             mean_values=self.mean_values
         )
 

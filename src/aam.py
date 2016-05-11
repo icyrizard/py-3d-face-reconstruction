@@ -1,4 +1,8 @@
+from matplotlib.tri import Triangulation
 import numpy as np
+import cv2
+
+import pca
 
 
 def get_mean(imm_points):
@@ -33,3 +37,57 @@ def get_mean(imm_points):
             mean. [[x_mean_0, y_mean_0], ... [x_mean_n, y_mean_n]]
     """
     return np.mean(imm_points, axis=0)
+
+
+def get_triangles(x_vector, y_vector):
+    """ perform triangulation between two 2d vectors"""
+    return Triangulation(x_vector, y_vector).triangles
+
+
+def build_feature_vectors(files, get_points, flattened=False):
+    """
+    Gets the aam points from the files and appends them seperately to one
+    array.
+
+    Args:
+        files (list): list files
+
+    return:
+        list: list of feature vectors
+    """
+    points = get_points(files)
+
+    if flattened:
+        points = pca.flatten_feature_vectors(points)
+
+    return points
+
+
+def get_pixel_values(image, points):
+    h, w, c = image.shape
+
+    points[:, 0] = points[:, 0] * w
+    points[:, 1] = points[:, 1] * h
+
+    image = cv2.blur(image, (3, 3))
+
+    hull = cv2.convexHull(points, returnPoints=True)
+    rect = cv2.boundingRect(hull)
+
+    pixels = []
+    x, y, w, h = rect
+
+    # pixels = np.zeros((h, w, c), dtype=np.uint8)
+
+    for i in np.linspace(0, 1, num=100):
+        for j in np.linspace(0, 1, num=100):
+            y_loc_g = int(i * h + y)
+            x_loc_g = int(j * w + x)
+
+            y_loc = min(int(i * h), h - 1)
+            x_loc = min(int(j * w), w - 1)
+
+            if cv2.pointPolygonTest(hull, (x_loc_g, y_loc_g), measureDist=False) >= 0:
+                pixels.extend(image[y_loc_g][x_loc_g])
+
+    return np.asarray(pixels, dtype=np.uint8), hull

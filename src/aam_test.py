@@ -1,6 +1,8 @@
 import numpy as np
 
-from aam import get_mean
+from aam import get_mean, get_pixel_values
+import imm_points
+import pca
 
 
 def test_build_mean_aan():
@@ -39,3 +41,15 @@ def test_zero_mean_aan():
     )
 
     np.testing.assert_array_equal(zero_mean, expected)
+
+
+def test_get_pixel_values():
+    asf_file = '../data/imm_face_db/40-2m.asf'
+    imm = imm_points.IMMPoints(filename=asf_file)
+
+    points = imm.get_points()
+    image = imm.get_image()
+
+    pixels, hull = get_pixel_values(image, points)
+
+    assert False

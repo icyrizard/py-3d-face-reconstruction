@@ -1,17 +1,11 @@
-import copy
 import argparse
 import logging
 import sys
 
-import cv2
-import numpy as np
-
 # local imports
 import pca
-
-from aam import get_mean
-from imm_points import IMMPoints, build_feature_vectors, \
-    flatten_feature_vectors
+import aam
+import imm_points as imm
 
 logging.basicConfig(level=logging.INFO,
         format='%(asctime)s %(levelname)s %(name)s: %(message)s')
@@ -20,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 def add_parser_options():
     parser = argparse.ArgumentParser(description='IMMPoints tool')
-
     pca_group = parser.add_argument_group('show_pca')
 
     pca_group.add_argument(
@@ -63,27 +56,26 @@ def save_pca_model(args):
 
     It is saved in the following way:
 
-        np.load(filename, np.assary([U, s, Vt, mean_values])
+        np.load(filename, np.assary([Vt, mean_values])
 
         And accessed by:
 
-        UsVtm = np.load(args.model_file)
+        Vtm = np.load(args.model_file)
 
-        U = UsVtm[0]
-        s = UsVtm[1]
-        Vt = UsVtm[2]
-        mean_values = UsVtm[3]
+        Vt = Vtm[0]
+        mean_values = Vtm[1][0]
 
     """
     assert args.asf, '--asf files should be given'
     assert args.model_file, '--model_file needs to be provided to save the pca model'
 
-    imm_points = build_feature_vectors(args.asf, flattened=True)
-    mean_values = get_mean(imm_points)
+    points = aam.build_feature_vectors(args.asf,
+            imm.get_imm_landmarks, flattened=True)
+    mean_values = aam.get_mean(points)
 
-    U, s, Vt = pca.pca(imm_points, mean_values)
+    _, _, Vt = pca.pca(points, mean_values)
 
-    pca.save(U, s, Vt, mean_values, args.model_file)
+    pca.save(Vt, mean_values, args.model_file)
 
     logger.info('saved pca model in %s', args.model_file)
 
@@ -92,59 +84,21 @@ def show_pca_model(args):
     assert args.asf, '--asf files should be given to allow the image to be shown'
     assert args.model_file, '--model_file needs to be provided to get the pca model'
 
-    U, s, Vt, mean_values = pca.load(args.model_file)
-
-    # init trackbars
-    # index = 0
-    # cv2.namedWindow('index')
-    # cv2.createTrackbar('index', 'index', index, len(args.asf) - 1, trackbarUpdate)
-
-    n_components = args.n_components
-    view.init_eigenvalue_trackbars(n_components, s, window='eigenvalues')
-
-    # use a copy of s to manipulate so we never touch the original
-    s_copy = copy.copy(s)
-    reconstruction = np.dot(Vt[:n_components], x - mean_values)
-
-    while True:
-        imm = IMMPoints(filename=args.asf[index])
-        reconstruction = np.dot(V[:n_components], x - mean_values)
-        # reconstruction = pca.reconstruct(U[index], s_copy, Vt, n_components, mean_values)
-
-        # reshape to x, y values
-        reconstructed = reconstruction.reshape((58, 2))
-
-        imm = IMMPoints(points=reconstructed)
-        img = np.full((480, 640, 3), 255, np.uint8)
-        imm.show_on_img(img)
-
-        for i in range(n_components):
-            s_copy[i] = s[i] + (
-                    (cv2.getTrackbarPos(str(i), 'eigenvalues') - 50) / 10.0)
-
-        index = cv2.getTrackbarPos('index', 'index')
-        imm.show(window_name='original')
-
-        k = cv2.waitKey(1) & 0xFF
-
-        if k == 27:
-            break
-
-    cv2.destroyAllWindows()
+    Vt, mean_values = pca.load(args.model_file)
 
 
 def reconstruct_with_model(args):
     assert args.asf, '--asf files should be given to allow the image to be shown'
     assert args.model_file, '--model_file needs to be provided to get the pca model'
 
-    # clear args. arguments are conflicting with parseargs
+    # clear sys args. arguments are conflicting with parseargs
     # kivy will parse args upon import and will crash if it finds our
-    # 'unsuported by kivy' arguments.
+    # 'unsupported by kivy' arguments.
     sys.argv[1:] = []
 
     from view.reconstruct import ReconstructApp
 
-    U, s, Vt, mean_values = pca.load(args.model_file)
+    Vt, mean_values = pca.load(args.model_file)
     ReconstructApp(
         args=args, eigen_vectors=Vt, mean_values=mean_values,
     ).run()
