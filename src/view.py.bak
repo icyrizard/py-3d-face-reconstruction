@@ -1,0 +1,16 @@
+import cv2
+
+
+class ViewState():
+    def __init__(self):
+        self.variables = {}
+
+    def update(self, key, value):
+        self.variables[key] = value
+
+
+def init_eigenvalue_trackbars(n_components, s, callback, window='image'):
+    cv2.namedWindow(window)
+
+    for i in range(n_components):
+        cv2.createTrackbar('{}'.format(i), 'eigenvalues', 50, 100, callback)

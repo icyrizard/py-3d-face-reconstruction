@@ -1,40 +1,26 @@
-all: data
+VIRTUALENV := venv
+PYTHON := python2.7
+PYTHON_BIN_PATH := /usr/local/bin/$(PYTHON)
+SITE_PACKAGES := $(VIRTUALENV)/lib/$(PYTHON)/site-packages
+
+OPENCV:= $(SITE_PACKAGES)/cv.py $(SITE_PACKAGES)/cv2.so
+
+TARGETS:= $(VIRTUALENV) data build
+all: $(TARGETS)
+
+include actions.mk
+include build.mk
 
 data: data/imm_face_db
 
-data/imm_face_db: data/imm_face_db.tar.gz
-	(cd data; mkdir -p imm_face_db; \
-		tar -xvzf imm_face_db.tar.gz -C imm_face_db
-	)
+build: $(OPENCV)
+	@(source $(VIRTUALENV)/bin/activate; \
+		pip install -r requirements.txt; \
+	);
 
-data/imm_face_db.tar.gz:
-	(cd data; wget http://www.imm.dtu.dk/~aam/datasets/imm_face_db.tar.gz)
+$(VIRTUALENV):
+	virtualenv -p $(PYTHON_BIN_PATH) venv
 
-train_model: data/pca_train_model.npy
-	python src/main.py \
-		--save_pca \
-		--asf data/imm_face_db/*.asf \
-		--model_file data/pca_train_model
-
-show_pca:
-	python src/main.py \
-		--show_pca \
-		--asf data/imm_face_db/*.asf \
-		--model_file data/pca_model.npy
-
-test_model:
-	python src/main.py \
-		--reconstruct \
-		--asf `./scripts/imm_test_set.sh` \
-		--model_file data/pca_train_model.npy \
-		--n_components 6
-
-show_reconstruction:
-	python src/main.py \
-		--reconstruct \
-		--asf data/imm_face_db/*.asf \
-		--model_file data/pca_train_model.npy \
-		--n_components 6
-
-test:
-	python -m py.test -f src/*_test.py
+$(SITE_PACKAGES)/cv%:
+	@/bin/ln -s `scripts/get_site_package_location.sh`/$(shell basename $@) $@
+	@ls $@

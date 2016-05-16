@@ -36,7 +36,7 @@ def reconstruct(feature_vector, Vt, mean_values, n_components=10):
     return np.dot(Vt[:n_components].T, yk) + mean_values
 
 
-def save(Vt, mean_values, filename):
+def save(Vt, mean_values, triangles, filename):
     """
     Store the U, s, Vt and mean of all the asf datafiles given by the asf
     files.
@@ -49,9 +49,10 @@ def save(Vt, mean_values, filename):
 
         Vt = Vtm[0]
         mean_values = Vtm[1][0]
+        triangles = Vtm[2]
 
     """
-    saving = np.asarray([Vt, [mean_values]])
+    saving = np.asarray([Vt, [mean_values], triangles])
     np.save(filename, saving)
 
 
@@ -76,8 +77,9 @@ def load(filename):
 
     Vt = Vtm[0]
     mean_values = Vtm[1][0]
+    triangles = Vtm[2]
 
-    return Vt, mean_values
+    return Vt, mean_values, triangles
 
 
 def flatten_feature_vectors(data):

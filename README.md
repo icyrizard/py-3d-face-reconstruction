@@ -2,7 +2,11 @@
 Run the following command
 ~~~~
 $ make
+$ source bin/activate
+$ make show_reconstruction
 ~~~~
+
+
 
 Will get the data needed for this tool.
 

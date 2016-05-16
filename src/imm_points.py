@@ -24,7 +24,6 @@ class IMMPoints():
         return self.points
 
     def get_image(self):
-        cv2.imread(self.image_file)
         return cv2.imread(self.image_file)
 
     def import_file(self, filename):
@@ -39,11 +38,12 @@ class IMMPoints():
 
         self.points = np.asarray(self.points, dtype='f')
 
-    def draw_triangles(self, img, points):
-        h, w, c = img.shape
+    def draw_triangles(self, img, points, multiply=True):
+        if multiply:
+            h, w, c = img.shape
 
-        points[:, 0] = points[:, 0] * w
-        points[:, 1] = points[:, 1] * h
+            points[:, 0] = points[:, 0] * w
+            points[:, 1] = points[:, 1] * h
 
         point_indices = list(range(0, 58))
         triangles = Triangulation(points[:, 0], points[:, 1])
@@ -60,8 +60,8 @@ class IMMPoints():
                         cv2.FONT_HERSHEY_SIMPLEX, .5, (100, 0, 255))
             cv2.circle(img, tuple(p), 3, color=(0, 255, 100))
 
-    def show_on_img(self, img, window_name='image'):
-        self.draw_triangles(img, self.points)
+    def show_on_img(self, img, window_name='image', multiply=True):
+        self.draw_triangles(img, self.points, multiply=multiply)
 
     def show(self, window_name='image'):
         """show the image and datapoints on the image"""
@@ -81,6 +81,11 @@ def get_imm_landmarks(files):
         points.append(imm.get_points())
 
     return np.asarray(points)
+
+
+def get_imm_image_with_landmarks(filename):
+    imm = IMMPoints(filename=filename)
+    return imm.get_image(), imm.get_points()
 
 
 def add_parser_options():

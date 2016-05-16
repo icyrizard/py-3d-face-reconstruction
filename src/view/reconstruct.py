@@ -28,6 +28,7 @@ class ImageCanvas(Widget):
     def __init__(self, **kwargs):
         super(ImageCanvas, self).__init__(**kwargs)
 
+        # TODO: don't init with a picture, we shouldnt have that knowlegde
         self.filename_image = 'data/imm_face_db/40-1m.jpg'
         self.canvas.clear()
 
@@ -35,6 +36,7 @@ class ImageCanvas(Widget):
             self.image = Image(pos=self.pos, size=self.size, source=self.filename_image)
             self.mesh = Mesh(mode='triangle_fan')
             self.triangles = InstructionGroup()
+            self.texture = InstructionGroup()
             self.outline = InstructionGroup()
 
         self.bind(pos=self.update_rect, size=self.update_rect)
@@ -71,15 +73,24 @@ class ImageCanvas(Widget):
         self.image.source = self.filename_image
         self.canvas.ask_update()
 
-    def build_line_grid(self, reconstructed):
+    def build_texture(self, r_texture, triangles):
+        self.texture.clear()
+
+        image_width, image_height = self.get_rendered_size()
+        self.triangles.add(Line(circle=(100, 200, 10)))
+
+        self.canvas.add(self.texture)
+        self.canvas.ask_update()
+
+
+    def build_line_grid(self, r_shape, triangles):
         self.triangles.clear()
 
         image_width, image_height = self.get_rendered_size()
-        triangles = aam.get_triangles(reconstructed[:, 0], reconstructed[:, 1])
 
         for tri in triangles:
             self.triangles.add(Color(0, 0, 1, 1))
-            points = reconstructed[tri]
+            points = r_shape[tri]
             x = points[:, 0] * image_width + self.get_image_left(image_width)
             y = (1.0 - points[:, 1]) * image_height + self.get_image_bottom(image_height)
 
@@ -96,13 +107,13 @@ class ImageCanvas(Widget):
         self.canvas.add(self.triangles)
         self.canvas.ask_update()
 
-    def build_mesh(self, reconstructed):
+    def build_mesh(self, r_shape):
         vertices = []
         xy_vertices = []
 
         for i in range(58):
-            x = reconstructed[i][0] * (self.center[0] + self.image.size[0] / 2.)
-            y = (1.0 - reconstructed[i][1]) * self.center[1] + self.center[1] / 2.
+            x = r_shape[i][0] * (self.center[0] + self.image.size[0] / 2.)
+            y = (1.0 - r_shape[i][1]) * self.center[1] + self.center[1] / 2.
 
             vertices.extend([x, y, 0, 0])
             xy_vertices.append([x, y])
@@ -122,10 +133,13 @@ class RootWidget(BoxLayout):
         super(RootWidget, self).__init__(**kwargs)
 
         self.images = kwargs['args'].asf
-        self.mean_values = kwargs['mean_values']
-        self.Vt = kwargs['eigen_vectors']
+        self.mean_values_shape = kwargs['mean_values_shape']
+        self.mean_texture_shape = kwargs['mean_values_texture']
+        self.eigenv_shape = kwargs['eigenv_shape']
+        self.eigenv_texture = kwargs['eigenv_texture']
+        self.triangles = kwargs['triangles']
         self.n_components = kwargs['args'].n_components
-        self.multipliers = np.ones(self.Vt.shape[1])
+        self.multipliers = np.ones(self.eigenv_shape.shape[1])
 
         # slider index
         self.index = 0
@@ -142,8 +156,8 @@ class RootWidget(BoxLayout):
         self.ids['image_viewer'].bind(size=self.on_resize)
         box_layout = self.ids['eigenvalues']
 
-        self.landmark_list = aam.build_feature_vectors(self.images,
-                imm.get_imm_landmarks, flattened=True)
+        self.landmark_list = aam.build_feature_vectors(
+                self.images, imm.get_imm_landmarks, flattened=True)
 
         for c in range(self.n_components):
             slider = Slider(min=-10, max=10, value=0, id=str(c))
@@ -159,18 +173,17 @@ class RootWidget(BoxLayout):
 
     def update_image_viewer(self):
         self.filename = self.images[self.index].split('.')[0] + '.jpg'
-        Vt = np.dot(np.diag(self.multipliers), self.Vt)
+        Vt_shape = np.dot(np.diag(self.multipliers), self.eigenv_shape)
 
-        reconstruction = pca.reconstruct(
-            self.landmark_list[self.index], Vt, self.mean_values,
+        r_shape = pca.reconstruct(
+            self.landmark_list[self.index], Vt_shape, self.mean_values_shape,
             n_components=self.n_components
-        )
-
-        reconstruction = reconstruction.reshape((-1, 2))
+        ).reshape((-1, 2))
 
         self.ids['image_viewer'].update_rect()
         self.ids['image_viewer'].update_image(self.filename)
-        self.ids['image_viewer'].build_line_grid(reconstruction)
+        self.ids['image_viewer'].build_line_grid(r_shape, self.triangles)
+        # self.ids['image_viewer'].build_texture(r_shape, self.triangles)
 
     def on_resize(self, *args):
         self.update_image_viewer()
@@ -194,16 +207,20 @@ class ReconstructApp(App):
     kv_directory = 'src/view/templates'
 
     def __init__(self, **kwargs):
-        self.eigen_vectors = kwargs['eigen_vectors']
-        self.mean_values = kwargs['mean_values']
-        self.args = kwargs['args']
-
         super(ReconstructApp, self).__init__(**kwargs)
+
+    def set_values(self, **kwargs):
+        for k in kwargs.keys():
+            setattr(self, k, kwargs[k])
 
     def build(self):
         return RootWidget(
-            args=self.args, eigen_vectors=self.eigen_vectors,
-            mean_values=self.mean_values
+            args=self.args,
+            eigenv_shape=self.eigenv_shape,
+            eigenv_texture=self.eigenv_texture,
+            mean_values_shape=self.mean_values_shape,
+            mean_values_texture=self.mean_values_texture,
+            triangles=self.triangles
         )
 
 if __name__ == '__main__':
