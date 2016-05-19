@@ -1,2 +1,6 @@
 data/*
 src/.cache/*
+src/utils/*.c
+src/utils/*.o
+src/utils/*.so
+src/utils/build/

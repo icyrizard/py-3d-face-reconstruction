@@ -1,11 +1,12 @@
 import logging
-
-from matplotlib.tri import Triangulation
 import numpy as np
+from matplotlib.tri import Triangulation
 import cv2
-import pca
 
+# local imports
+import pca
 from utils.generate_head_texture import fill_triangle, get_colors_triangle
+import utils.triangles as tu
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(name)s: %(message)s')
@@ -51,7 +52,7 @@ def get_triangles(x_vector, y_vector):
     return Triangulation(x_vector, y_vector).triangles
 
 
-def build_feature_vectors(files, get_points, flattened=False):
+def build_shape_feature_vectors(files, get_points, flattened=False):
     """
     Gets the aam points from the files and appends them seperately to one
     array.
@@ -70,47 +71,14 @@ def build_feature_vectors(files, get_points, flattened=False):
     return points
 
 
-def cartesian2barycentric(r1, r2, r3, r):
-    x, y = r
-    x1, y1 = r1
-    x2, y2 = r2
-    x3, y3 = r3
-
-    a = np.array([[x1, x2, x3], [y1, y2, y3], [1, 1, 1]])
-    b = np.array([x, y, 1])
-
-    return np.linalg.solve(a, b)
-
-
-def barycentric2cartesian(r1, r2, r3, L):
-    x1, y1 = r1
-    x2, y2 = r2
-    x3, y3 = r3
-
-    a = np.array([[x1, x2, x3], [y1, y2, y3], [1, 1, 1]])
-    b = np.array(L)
-
-    return np.asarray(np.dot(a, b), dtype=np.uint32)
-
-
-def sample_from_triangles(b, points2d_b, triangles, n_samples=20):
+def sample_from_triangles(image, points2d, triangles, n_samples=20):
     all_triangles = []
-    h, w, c = b.shape
+    h, w, c = image.shape
 
     for tri in triangles:
-        p1_b = points2d_b[tri[0]]
-        p2_b = points2d_b[tri[1]]
-        p3_b = points2d_b[tri[2]]
-
-        cv2.line(b,
-                 tuple(p1_b),
-                 tuple(p2_b), (0, 255, 0), 1)
-        cv2.line(b,
-                 tuple(p2_b),
-                 tuple(p3_b), (0, 255, 0), 1)
-        cv2.line(b,
-                 tuple(p3_b),
-                 tuple(p1_b), (0, 255, 0), 1)
+        p1 = points2d[tri[0]]
+        p2 = points2d[tri[1]]
+        p3 = points2d[tri[2]]
 
         bary_centric_range = np.linspace(0, 1, num=n_samples)
         pixels = np.full((n_samples * n_samples, 3), fill_value=-1, dtype=np.int)
@@ -126,8 +94,8 @@ def sample_from_triangles(b, points2d_b, triangles, n_samples=20):
                     L[2] = 1 - s - t
 
                     # cartesian x, y coordinates inside the triangle
-                    cart_x, cart_y, _ = barycentric2cartesian(p1_b, p2_b, p3_b, L)
-                    pixels[s_i * n_samples + t_i, :] = b[cart_y, cart_x, :]
+                    cart_x, cart_y, _ = tu.barycentric2cartesian(p1, p2, p3, L)
+                    pixels[s_i * n_samples + t_i, :] = image[cart_y, cart_x, :]
 
                     # cv2.circle(b, tuple([cart_x, cart_y]), 1, color=(0, 255, 100))
 
@@ -136,17 +104,27 @@ def sample_from_triangles(b, points2d_b, triangles, n_samples=20):
     return np.asarray(all_triangles, dtype=np.uint8)
 
 
-def build_texture_feature_vector(files, get_image_with_landmarks, triangles):
+def build_texture_feature_vectors(files, get_image_with_landmarks, triangles,
+        flattened=True):
     mean_texture = []
+    """
+    Args:
+        files (list): list files
+        flattened (bool): Flatten the inner feature vectors, see
+            flatten_feature_vectors.
 
-    for i, f in enumerate(files[:10]):
+    Returns:
+        list: list of feature vectors
+    """
+
+    for i, f in enumerate(files[:1]):
         image, landmarks = get_image_with_landmarks(f)
         h, w, c = image.shape
         landmarks[:, 0] = landmarks[:, 0] * w
         landmarks[:, 1] = landmarks[:, 1] * h
 
         triangles_colors = sample_from_triangles(
-            image, landmarks, triangles
+            image, landmarks, triangles, n_samples=80
         )
 
         mean_texture.append(triangles_colors)
@@ -158,7 +136,12 @@ def build_texture_feature_vector(files, get_image_with_landmarks, triangles):
         # if k == 27:
         #     break
 
-    return np.asarray(mean_texture)
+    mean_texture = np.asarray(mean_texture)
+
+    if flattened:
+        mean_texture = pca.flatten_feature_vectors(mean_texture)
+
+    return mean_texture
 
 
 def get_pixel_values(image, points):
@@ -172,7 +155,6 @@ def get_pixel_values(image, points):
     hull = cv2.convexHull(points, returnPoints=True)
     rect = cv2.boundingRect(hull)
 
-    pixels = []
     x, y, w, h = rect
 
     # pixels = np.zeros((h, w, c), dtype=np.uint8)
@@ -185,7 +167,6 @@ def get_pixel_values(image, points):
                 image[y_loc_g][x_loc_g][0] = 0
                 image[y_loc_g][x_loc_g][1] = 0
                 image[y_loc_g][x_loc_g][2] = 0
-                pixels.extend(image[y_loc_g][x_loc_g])
 
     # return np.asarray(pixels, dtype=np.uint8), hull
     return image, hull

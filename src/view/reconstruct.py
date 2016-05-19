@@ -2,6 +2,7 @@ import kivy
 kivy.require('1.0.7')
 
 import numpy as np
+import cv2
 
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
@@ -12,6 +13,7 @@ from kivy.uix.slider import Slider
 from kivy.properties import ObjectProperty
 from kivy.uix.widget import Widget
 from kivy.graphics import Rectangle, Mesh, Line, Triangle
+from kivy.graphics.texture import Texture
 from kivy.graphics.instructions import InstructionGroup
 from kivy.graphics.context_instructions import Color
 from functools import partial
@@ -73,11 +75,46 @@ class ImageCanvas(Widget):
         self.image.source = self.filename_image
         self.canvas.ask_update()
 
-    def build_texture(self, r_texture, triangles):
+    def build_texture(self, r_shape, r_texture, triangles):
         self.texture.clear()
 
         image_width, image_height = self.get_rendered_size()
-        self.triangles.add(Line(circle=(100, 200, 10)))
+
+        bary_centric_range = np.linspace(0, 1, num=20)
+        texture = Texture.create(size=(image_width, image_height), colorfmt='bgr')
+        buf = np.zeros((image_width, image_height, 3), dtype=np.uint8)
+
+        for tri in triangles[:1]:
+            points = r_shape[tri]
+            pixels = r_texture[tri].reshape((-1, 3))
+
+            x = points[:, 0] * image_width + self.get_image_left(image_width)
+            y = (1.0 - points[:, 1]) * image_height + self.get_image_bottom(image_height)
+
+            p1 = [x[0], y[0]]
+            p2 = [x[1], y[1]]
+            p3 = [x[2], y[2]]
+
+            L = np.zeros((3, 1))
+
+            for s_i, s in enumerate(bary_centric_range):
+                for t_i, t in enumerate(bary_centric_range):
+                    if s + t <= 1:
+                        # build lambda's
+                        L[0] = s
+                        L[1] = t
+                        L[2] = 1 - s - t
+
+                        cart_x, cart_y, _ = aam.barycentric2cartesian(p1, p2, p3, L)
+                        buf[s_i, t_i, :] = pixels[s_i * 20 + t_i, :]
+
+        #buf = b''.join(map(chr, buf))
+        cv2.imshow('image', buf)
+        cv2.waitKey(0)
+
+        #texture.blit_buffer(buf, colorfmt='bgr', bufferfmt='ubyte')
+        #self.texture.add(Rectangle(texture=texture, pos=(0, 100),
+        #                 size=(image_width, image_height)))
 
         self.canvas.add(self.texture)
         self.canvas.ask_update()
@@ -132,9 +169,9 @@ class RootWidget(BoxLayout):
     def __init__(self, **kwargs):
         super(RootWidget, self).__init__(**kwargs)
 
-        self.images = kwargs['args'].asf
+        self.files = kwargs['args'].files
         self.mean_values_shape = kwargs['mean_values_shape']
-        self.mean_texture_shape = kwargs['mean_values_texture']
+        self.mean_values_texture = kwargs['mean_values_texture']
         self.eigenv_shape = kwargs['eigenv_shape']
         self.eigenv_texture = kwargs['eigenv_texture']
         self.triangles = kwargs['triangles']
@@ -146,7 +183,7 @@ class RootWidget(BoxLayout):
         self.filename = ''
 
         image_slider = self.ids['image_slider']
-        image_slider.max = len(self.images) - 1
+        image_slider.max = len(self.files) - 1
         image_slider.bind(value=self.update_image)
 
         n_components_slider = self.ids['n_components']
@@ -156,8 +193,8 @@ class RootWidget(BoxLayout):
         self.ids['image_viewer'].bind(size=self.on_resize)
         box_layout = self.ids['eigenvalues']
 
-        self.landmark_list = aam.build_feature_vectors(
-                self.images, imm.get_imm_landmarks, flattened=True)
+        self.shape_list = aam.build_shape_feature_vectors(
+            self.files, imm.get_imm_points, flattened=True)
 
         for c in range(self.n_components):
             slider = Slider(min=-10, max=10, value=0, id=str(c))
@@ -165,25 +202,34 @@ class RootWidget(BoxLayout):
             slider.bind(value=self.update_eigenvalues)
 
     def reset_sliders(self):
-        self.multipliers = np.ones(self.Vt.shape[1])
+        self.multipliers = np.ones(self.eigenv_shape.shape[1])
         box_layout = self.ids['eigenvalues']
 
         for c in box_layout.children:
             c.value = 0
 
     def update_image_viewer(self):
-        self.filename = self.images[self.index].split('.')[0] + '.jpg'
+        self.filename = self.files[self.index].split('.')[0] + '.jpg'
         Vt_shape = np.dot(np.diag(self.multipliers), self.eigenv_shape)
+        # Vt_texture = np.dot(np.diag(self.multipliers), self.eigenv_texture)
 
         r_shape = pca.reconstruct(
-            self.landmark_list[self.index], Vt_shape, self.mean_values_shape,
+            self.shape_list[self.index], Vt_shape, self.mean_values_shape,
             n_components=self.n_components
         ).reshape((-1, 2))
+
+        # image = cv2.imread(self.filename)
+        # pixels = aam.sample_from_triangles(image, r_shape, self.triangles)
+        # pixels = np.ndarray.flatten(pixels)
+
+        # r_texture = pca.reconstruct(
+        #     pixels, self.eigenv_texture, self.mean_values_texture,
+        #     n_components=50000).reshape((95, -1))
+        # self.ids['image_viewer'].build_texture(r_shape, r_texture, self.triangles)
 
         self.ids['image_viewer'].update_rect()
         self.ids['image_viewer'].update_image(self.filename)
         self.ids['image_viewer'].build_line_grid(r_shape, self.triangles)
-        # self.ids['image_viewer'].build_texture(r_shape, self.triangles)
 
     def on_resize(self, *args):
         self.update_image_viewer()

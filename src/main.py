@@ -1,6 +1,11 @@
+# python std
 import argparse
 import logging
 import sys
+
+# installed packages
+import cv2
+import numpy as np
 
 # local imports
 import pca
@@ -36,9 +41,8 @@ def add_parser_options():
         help='Show and manipulate the saved PCA model'
     )
 
-    # asf model_files
     pca_group.add_argument(
-        '--asf', nargs='+', help='asf files to process'
+        '--files', nargs='+', help='files to process'
     )
 
     pca_group.add_argument(
@@ -76,14 +80,14 @@ def save_pca_model_texture(args):
         mean_values = Vtm[1][0]
 
     """
-    assert args.asf, '--asf files should be given'
+    assert args.files, '--files should be given'
     assert args.model_shape_file, '--model_texture_file needs to be provided to save the pca model'
     assert args.model_texture_file, '--model_texture_file needs to be provided to save the pca model'
 
     Vt, mean_values, triangles = pca.load(args.model_shape_file)
 
-    textures = aam.build_texture_feature_vector(
-        args.asf, imm.get_imm_image_with_landmarks, triangles
+    textures = aam.build_texture_feature_vectors(
+        args.files, imm.get_imm_image_with_landmarks, triangles, flattened=True
     )
 
     mean_texture = aam.get_mean(textures)
@@ -110,11 +114,11 @@ def save_pca_model_shape(args):
         mean_values = Vtm[1][0]
 
     """
-    assert args.asf, '--asf files should be given'
+    assert args.files, '--files should be given'
     assert args.model_shape_file, '--model_shape_file needs to be provided to save the pca model'
 
-    points = aam.build_feature_vectors(args.asf,
-            imm.get_imm_landmarks, flattened=True)
+    points = aam.build_shape_feature_vectors(
+        args.files, imm.get_imm_points, flattened=True)
 
     mean_values = aam.get_mean(points)
 
@@ -128,7 +132,7 @@ def save_pca_model_shape(args):
 
 
 def reconstruct_with_model(args):
-    assert args.asf, '--asf files should be given to allow the image to be shown'
+    assert args.files, '--files should be given to allow the image to be shown'
     assert args.model_shape_file, '--model_shape_file needs to be provided to get the pca model'
 
     # clear sys args. arguments are conflicting with parseargs
@@ -154,11 +158,54 @@ def reconstruct_with_model(args):
     app.run()
 
 
+def show_pca_model(args):
+    assert args.model_shape_file, '--model_texture_file needs to be provided to save the pca model'
+    assert args.model_texture_file, '--model_texture_file needs to be provided to save the pca model'
+
+    from utils.triangles import draw_shape, draw_texture
+
+    Vt_shape, mean_values_shape, triangles = pca.load(args.model_shape_file)
+    Vt_texture, mean_values_texture, _ = pca.load(args.model_texture_file)
+
+    image = np.full((480, 640, 3), fill_value=255, dtype=np.uint8)
+
+    immPoints = imm.IMMPoints(filename='data/imm_face_db/40-1m.asf')
+    input_image = immPoints.get_image()
+    input_points = immPoints.get_points()
+    h, w, c = input_image.shape
+
+    input_points[:, 0] = input_points[:, 0] * w
+    input_points[:, 1] = input_points[:, 1] * h
+
+    mean_values_shape = mean_values_shape.reshape((58, 2))
+    mean_values_shape[:, 0] = mean_values_shape[:, 0] * w
+    mean_values_shape[:, 1] = mean_values_shape[:, 1] * h
+
+    while True:
+        draw_texture(input_image, image, input_points, mean_values_shape,
+                     mean_values_texture, triangles, n_samples=80)
+        draw_shape(image, mean_values_shape, triangles, multiply=False)
+
+        cv2.imshow('input_image', input_image)
+        cv2.imshow('image', image)
+        k = cv2.waitKey(0) & 0xFF
+
+        if k == 27:
+            break
+
+        i += 1
+
+    cv2.destroyAllWindows()
+
+
 def main():
+    """main"""
     parser = add_parser_options()
     args = parser.parse_args()
 
-    if args.save_pca_shape:
+    if args.show_pca:
+        show_pca_model(args)
+    elif args.save_pca_shape:
         save_pca_model_shape(args)
     elif args.save_pca_texture:
         save_pca_model_texture(args)

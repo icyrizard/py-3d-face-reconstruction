@@ -38,9 +38,9 @@ class IMMPoints():
 
         self.points = np.asarray(self.points, dtype='f')
 
-    def draw_triangles(self, img, points, multiply=True):
+    def draw_triangles(self, image, points, multiply=True):
         if multiply:
-            h, w, c = img.shape
+            h, w, c = image.shape
 
             points[:, 0] = points[:, 0] * w
             points[:, 1] = points[:, 1] * h
@@ -50,30 +50,30 @@ class IMMPoints():
 
         for t, tri in enumerate(triangles.triangles):
             p1, p2, p3 = points[tri]
-            cv2.line(img, tuple(p1), tuple(p2), (255, 0, 100), 1)
-            cv2.line(img, tuple(p2), tuple(p3), (255, 0, 100), 1)
-            cv2.line(img, tuple(p3), tuple(p1), (255, 0, 100), 1)
+            cv2.line(image, tuple(p1), tuple(p2), (255, 0, 100), 1)
+            cv2.line(image, tuple(p2), tuple(p3), (255, 0, 100), 1)
+            cv2.line(image, tuple(p3), tuple(p1), (255, 0, 100), 1)
 
         for i, p in enumerate(points):
             point_index = int(point_indices[i])
-            cv2.putText(img, str(point_index), tuple((p[0], p[1])),
+            cv2.putText(image, str(point_index), tuple((p[0], p[1])),
                         cv2.FONT_HERSHEY_SIMPLEX, .5, (100, 0, 255))
-            cv2.circle(img, tuple(p), 3, color=(0, 255, 100))
+            cv2.circle(image, tuple(p), 3, color=(0, 255, 100))
 
-    def show_on_img(self, img, window_name='image', multiply=True):
-        self.draw_triangles(img, self.points, multiply=multiply)
+    def show_on_image(self, image, window_name='image', multiply=True):
+        self.draw_triangles(image, self.points, multiply=multiply)
 
     def show(self, window_name='image'):
         """show the image and datapoints on the image"""
         assert(len(self.points) > 0)
         assert(len(self.filename) > 0)
 
-        img = self.get_image()
+        image = self.get_image()
 
-        self.draw_triangles(img, self.points)
+        self.draw_triangles(image, self.points)
 
 
-def get_imm_landmarks(files):
+def get_imm_points(files):
     points = []
 
     for f in files:
