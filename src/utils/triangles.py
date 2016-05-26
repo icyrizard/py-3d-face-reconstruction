@@ -67,8 +67,9 @@ def draw_shape(image, points, triangles, multiply=True):
         cv2.circle(image, tuple(p), 3, color=(0, 255, 100))
 
 
-def draw_texture(src, dest, points2d_src, points2d_dest, texture, triangles, multiply=True, n_samples=20):
-    texture  = np.asarray(texture, dtype=np.uint8).reshape((-1, 3))
+def draw_texture(src, dest, points2d_src, points2d_dest, texture,
+                 triangles, multiply=True, n_samples=20):
+    texture = np.asarray(texture, dtype=np.uint8).reshape((-1, 3))
 
     for t, tri in enumerate(triangles):
         src_p1, src_p2, src_p3 = points2d_src[tri]

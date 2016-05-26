@@ -193,8 +193,6 @@ def show_pca_model(args):
         if k == 27:
             break
 
-        i += 1
-
     cv2.destroyAllWindows()
 
 

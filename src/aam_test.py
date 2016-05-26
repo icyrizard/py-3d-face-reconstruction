@@ -1,7 +1,8 @@
 import numpy as np
+import cv2
+import pytest
 
 import imm_points
-import cv2
 import aam
 import pca
 
@@ -44,6 +45,7 @@ def test_zero_mean_aan():
     np.testing.assert_array_equal(zero_mean, expected)
 
 
+@pytest.mark.skipif(True, reason='not suitable for pytest')
 def test_get_pixel_values():
     asf_file = '../data/imm_face_db/40-2m.asf'
     imm = imm_points.IMMPoints(filename=asf_file)
@@ -54,6 +56,7 @@ def test_get_pixel_values():
     pixels, hull = aam.get_pixel_values(image, points)
 
 
+@pytest.mark.skipif(True, reason='not suitable for pytest')
 def test_sample_from_triangles():
     blue_points = [[20, 20], [50, 160], [160, 20],
                    [50, 20], [60, 200], [180, 20]]

@@ -71,7 +71,7 @@ def build_shape_feature_vectors(files, get_points, flattened=False):
     return points
 
 
-def sample_from_triangles(image, points2d, triangles, n_samples=20):
+def sample_from_triangles(image, points2d, triangles, n_samples=80):
     all_triangles = []
     h, w, c = image.shape
 

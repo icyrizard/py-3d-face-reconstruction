@@ -49,3 +49,6 @@ show_reconstruction:
 
 test:
 	python -m py.test -f src/*_test.py
+
+test_modules:
+	python -m py.test -f src/*/*_test.py

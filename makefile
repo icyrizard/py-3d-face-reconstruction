@@ -5,21 +5,19 @@ SITE_PACKAGES := $(VIRTUALENV)/lib/$(PYTHON)/site-packages
 
 OPENCV:= $(SITE_PACKAGES)/cv.py $(SITE_PACKAGES)/cv2.so
 
-TARGETS:= $(VIRTUALENV) data build utils
+TARGETS:= $(OPENCV) $(VIRTUALENV) data utils
 all: $(TARGETS)
 
 include actions.mk
-include build.mk
 
 data: data/imm_face_db
-
 utils: generate_head_texture.so
 
 generate_head_texture.so: src/utils/generate_head_texture.pyx
 	(cd src/utils; python setup.py build_ext --inplace)
 
 
-build: $(OPENCV)
+build: requirements.txt
 	@(source $(VIRTUALENV)/bin/activate; \
 		pip install -r requirements.txt; \
 	);
