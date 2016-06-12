@@ -5,7 +5,8 @@ import cv2
 
 # local imports
 import pca
-from utils.generate_head_texture import fill_triangle, get_colors_triangle
+from utils.generate_head_texture import fill_triangle, get_colors_triangle, \
+    get_row_colors_triangle
 import utils.triangles as tu
 
 logging.basicConfig(level=logging.INFO,
@@ -66,47 +67,40 @@ def build_shape_feature_vectors(files, get_points, flattened=False):
     points = get_points(files)
 
     if flattened:
-        points = pca.flatten_feature_vectors(points)
+        points = pca.flatten_feature_vectors(points, dim=0)
 
     return points
 
 
-def sample_from_triangles(image, points2d, triangles, n_samples=80):
-    all_triangles = []
-    h, w, c = image.shape
+def sample_from_triangles(src, points2d_src, points2d_dst, triangles):
+    # texture = np.asarray(texture, dtype=np.uint8).reshape((-1, 3))
+    triangles_pixels = []
+    pixels = 0
 
     for tri in triangles:
-        p1 = points2d[tri[0]]
-        p2 = points2d[tri[1]]
-        p3 = points2d[tri[2]]
+        src_p1, src_p2, src_p3 = points2d_src[tri]
+        dst_p1, dst_p2, dst_p3 = points2d_dst[tri]
 
-        bary_centric_range = np.linspace(0, 1, num=n_samples)
-        pixels = np.full((n_samples * n_samples, 3), fill_value=-1, dtype=np.int)
-        L = np.zeros((3, 1))
+        dst = get_row_colors_triangle(
+            src,
+            src_p1[0], src_p1[1],
+            src_p2[0], src_p2[1],
+            src_p3[0], src_p3[1],
+            dst_p1[0], dst_p1[1],
+            dst_p2[0], dst_p2[1],
+            dst_p3[0], dst_p3[1]
+        )
 
-        for s_i, s in enumerate(bary_centric_range):
-            for t_i, t in enumerate(bary_centric_range):
-                # make sure the coordinates are inside the triangle
-                if s + t <= 1:
-                    # build lambda's
-                    L[0] = s
-                    L[1] = t
-                    L[2] = 1 - s - t
+        pixels += dst.flatten().shape[0]
 
-                    # cartesian x, y coordinates inside the triangle
-                    cart_x, cart_y, _ = tu.barycentric2cartesian(p1, p2, p3, L)
-                    pixels[s_i * n_samples + t_i, :] = image[cart_y, cart_x, :]
+        triangles_pixels.extend(dst.flatten())
 
-                    # cv2.circle(b, tuple([cart_x, cart_y]), 1, color=(0, 255, 100))
+    result = np.asarray(triangles_pixels, dtype=np.uint8)
 
-        all_triangles.append(pixels[np.where(pixels >= 0)])
-
-    return np.asarray(all_triangles, dtype=np.uint8)
+    return result
 
 
-def build_texture_feature_vectors(files, get_image_with_landmarks, triangles,
-        flattened=True):
-    mean_texture = []
+def build_texture_feature_vectors(files, get_image_with_shape, mean_shape, triangles):
     """
     Args:
         files (list): list files
@@ -116,16 +110,22 @@ def build_texture_feature_vectors(files, get_image_with_landmarks, triangles,
     Returns:
         list: list of feature vectors
     """
+    mean_texture = []
 
-    for i, f in enumerate(files[:1]):
-        image, landmarks = get_image_with_landmarks(f)
+    mean_shape_scaled = mean_shape.reshape((58, 2))
+    mean_shape_scaled[:, 0] = mean_shape_scaled[:, 0] * 640
+    mean_shape_scaled[:, 1] = mean_shape_scaled[:, 1] * 480
+
+    for i, f in enumerate(files):
+        image, shape = get_image_with_shape(f)
         h, w, c = image.shape
-        landmarks[:, 0] = landmarks[:, 0] * w
-        landmarks[:, 1] = landmarks[:, 1] * h
+
+        shape[:, 0] = shape[:, 0] * w
+        shape[:, 1] = shape[:, 1] * h
 
         triangles_colors = sample_from_triangles(
-            image, landmarks, triangles, n_samples=80
-        )
+            image, shape, mean_shape_scaled, triangles
+            )
 
         mean_texture.append(triangles_colors)
         logger.info('processed file: {} {}/{}'.format(f, i, len(files)))
@@ -135,11 +135,8 @@ def build_texture_feature_vectors(files, get_image_with_landmarks, triangles,
 
         # if k == 27:
         #     break
-
     mean_texture = np.asarray(mean_texture)
-
-    if flattened:
-        mean_texture = pca.flatten_feature_vectors(mean_texture)
+    #mean_texture = pca.flatten_feature_vectors(mean_texture)
 
     return mean_texture
 

@@ -36,7 +36,7 @@ def reconstruct(feature_vector, Vt, mean_values, n_components=10):
     return np.dot(Vt[:n_components].T, yk) + mean_values
 
 
-def save(Vt, mean_values, triangles, filename):
+def save(Vt, s, mean_values, triangles, filename):
     """
     Store the U, s, Vt and mean of all the asf datafiles given by the asf
     files.
@@ -52,7 +52,7 @@ def save(Vt, mean_values, triangles, filename):
         triangles = Vtm[2]
 
     """
-    saving = np.asarray([Vt, [mean_values], triangles])
+    saving = np.asarray([Vt, s, [mean_values], triangles])
     np.save(filename, saving)
 
 
@@ -76,13 +76,14 @@ def load(filename):
     Vtm = np.load(filename)
 
     Vt = Vtm[0]
-    mean_values = Vtm[1][0]
-    triangles = Vtm[2]
+    s = Vtm[1]
+    mean_values = Vtm[2][0]
+    triangles = Vtm[3]
 
-    return Vt, mean_values, triangles
+    return Vt, s, mean_values, triangles
 
 
-def flatten_feature_vectors(data):
+def flatten_feature_vectors(data, dim=0):
     """
     Flattens the feature vectors inside a ndarray
 
@@ -102,6 +103,7 @@ def flatten_feature_vectors(data):
 
     Args:
         data (numpy array): array of feature vectors
+        dim (int): dimension to flatten the data
 
     return:
         array: (numpy array): array flattened feature vectors
@@ -109,9 +111,9 @@ def flatten_feature_vectors(data):
     """
     flattened = []
 
-    rows, _, _ = data.shape
+    n = data.shape[dim]
 
-    for i in range(rows):
+    for i in range(n):
         flattened.append(np.ndarray.flatten(data[i]))
 
     return np.array(flattened)

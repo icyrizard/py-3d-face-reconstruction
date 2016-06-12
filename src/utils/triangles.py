@@ -67,20 +67,20 @@ def draw_shape(image, points, triangles, multiply=True):
         cv2.circle(image, tuple(p), 3, color=(0, 255, 100))
 
 
-def draw_texture(src, dest, points2d_src, points2d_dest, texture,
-                 triangles, multiply=True, n_samples=20):
-    texture = np.asarray(texture, dtype=np.uint8).reshape((-1, 3))
+def draw_texture(src, dest, Vt, points2d_src, points2d_dst, texture, triangles):
+    # texture = np.asarray(texture, dtype=np.uint8).reshape((-1, 3))
+    texture = np.asarray(texture, np.uint8)
+    offset = 0
 
     for t, tri in enumerate(triangles):
         src_p1, src_p2, src_p3 = points2d_src[tri]
-        dest_p1, dest_p2, dest_p3 = points2d_dest[tri]
+        dst_p1, dst_p2, dst_p3 = points2d_dst[tri]
 
-        get_colors_triangle(
-            src, dest,
-            src_p1[0], src_p1[1],
-            src_p2[0], src_p2[1],
-            src_p3[0], src_p3[1],
-            dest_p1[0], dest_p1[1],
-            dest_p2[0], dest_p2[1],
-            dest_p3[0], dest_p3[1]
+        offset += fill_triangle(
+            texture, dest,
+            dst_p1[0], dst_p1[1],
+            dst_p2[0], dst_p2[1],
+            dst_p3[0], dst_p3[1],
+            offset,
+            t
         )
