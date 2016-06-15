@@ -84,16 +84,16 @@ def save_pca_model_texture(args):
     assert args.model_shape_file, '--model_texture_file needs to be provided to save the pca model'
     assert args.model_texture_file, '--model_texture_file needs to be provided to save the pca model'
 
-    Vt, s, mean_shape, triangles = pca.load(args.model_shape_file)
+    Vt, s, n_components, mean_shape, triangles = pca.load(args.model_shape_file)
 
     textures = aam.build_texture_feature_vectors(
         args.files, imm.get_imm_image_with_landmarks, mean_shape, triangles
     )
 
     mean_texture = aam.get_mean(textures)
-    _, s, Vt = pca.pca(textures, mean_texture)
+    _, s, Vt, n_components = pca.pca(textures, mean_texture)
 
-    pca.save(Vt, s, mean_texture, triangles, args.model_texture_file)
+    pca.save(Vt, s, n_components, mean_texture, triangles, args.model_texture_file)
 
     logger.info('texture pca model saved in %s', args.model_texture_file)
 
@@ -123,12 +123,12 @@ def save_pca_model_shape(args):
 
     mean_values = aam.get_mean(points)
 
-    _, s, Vt = pca.pca(points, mean_values)
+    _, s, Vt, n_components = pca.pca(points, mean_values)
 
     mean_xy = mean_values.reshape((-1, 2))
     triangles = aam.get_triangles(mean_xy[:, 0], mean_xy[:, 1])
 
-    pca.save(Vt, s, mean_values, triangles, args.model_shape_file)
+    pca.save(Vt, s, n_components, mean_values, triangles, args.model_shape_file)
     logger.info('shape pca model saved in %s', args.model_shape_file + '_shape')
 
 
@@ -142,8 +142,9 @@ def reconstruct_with_model(args):
     sys.argv[1:] = []
 
     from view.reconstruct import ReconstructApp
-    Vt_shape, mean_values_shape, triangles = pca.load(args.model_shape_file)
-    Vt_texture, mean_values_texture, _ = pca.load(args.model_texture_file)
+
+    Vt_shape, s, n_shape_components, mean_values_shape, triangles = pca.load(args.model_shape_file)
+    Vt_texture, s_texture, n_texture_components, mean_values_texture, _ = pca.load(args.model_texture_file)
 
     app = ReconstructApp()
 
@@ -152,7 +153,9 @@ def reconstruct_with_model(args):
         eigenv_shape=Vt_shape,
         eigenv_texture=Vt_texture,
         mean_values_shape=mean_values_shape,
+        n_shape_components=n_shape_components,
         mean_values_texture=mean_values_texture,
+        n_texture_components=n_texture_components,
         triangles=triangles
     )
 
@@ -165,19 +168,8 @@ def show_pca_model(args):
 
     from utils.triangles import draw_shape, draw_texture
 
-    Vt_shape, s, mean_values_shape, triangles = pca.load(args.model_shape_file)
-    Vt_texture, s_texture, mean_values_texture, _ = pca.load(args.model_texture_file)
-
-    # calculate n_components which captures 90 percent of the variance
-    total = s_texture.sum()
-    subtotal = 0.0
-    i = 0
-
-    while (subtotal * 100.0) / total <= 90.0:
-        subtotal += s_texture[i]
-        i += 1
-
-    n_components = i
+    Vt_shape, s, n_shape_components, mean_values_shape, triangles = pca.load(args.model_shape_file)
+    Vt_texture, s_texture, n_texture_components, mean_values_texture, _ = pca.load(args.model_texture_file)
 
     image = np.full((480, 640, 3), fill_value=255, dtype=np.uint8)
 
@@ -195,7 +187,7 @@ def show_pca_model(args):
 
     while True:
         draw_texture(input_image, image, Vt_texture, input_points, mean_values_shape,
-                     mean_values_texture, triangles)
+                     mean_values_texture, triangles, n_texture_components)
         #draw_shape(image, mean_values_shape, triangles, multiply=False)
 
         cv2.imshow('input_image', input_image)

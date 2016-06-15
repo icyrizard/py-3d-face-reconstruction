@@ -6,7 +6,9 @@ data/imm_face_db: data/imm_face_db.tar.gz
 		tar -xvzf imm_face_db.tar.gz -C imm_face_db
 	)
 
-train_model: data/pca_shape_model.npy data/pca_texture_model.npy
+train_model:train_shape
+train_texture: data/pca_texture_model.npy
+train_shape: data/pca_shape_model.npy
 
 data/imm_face_db.tar.gz:
 	(cd data; wget http://www.imm.dtu.dk/~aam/datasets/imm_face_db.tar.gz)

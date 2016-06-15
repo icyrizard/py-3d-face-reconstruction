@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def pca(data, mean_values):
+def pca(data, mean_values, variance_percentage=90):
     """
     Perform Singlar Value Decomposition
 
@@ -14,10 +14,21 @@ def pca(data, mean_values):
     zero_mean = data - mean_values
     U, s, Vt = np.linalg.svd(zero_mean, full_matrices=False)
 
-    return U, s, Vt
+    # calculate n_components which captures 90 percent of the variance
+    total = s.sum()
+    subtotal = 0.0
+    i = 0
+
+    while (subtotal * 100.0) / total <= variance_percentage:
+        subtotal += s[i]
+        i += 1
+
+    n_components = i
+
+    return U, s, Vt, n_components
 
 
-def reconstruct(feature_vector, Vt, mean_values, n_components=10):
+def reconstruct(feature_vector, Vt, mean_values, n_components=None):
     """
     Reconstruct with U, s, Vt
 
@@ -28,15 +39,18 @@ def reconstruct(feature_vector, Vt, mean_values, n_components=10):
         Vt (numpy ndarray): Two dimensional array with dimensions
         (n_features, n_features)
         mean_values (numpy ndarray): mean values of the features of the model,
-        this should have dimensions (n_featurs, )
+        this should have dimensions (n_features, )
     """
+    if n_components is None:
+        n_components = Vt.shape[1]
+
     zm = feature_vector - mean_values
     yk = np.dot(Vt[:n_components], zm.T)
 
     return np.dot(Vt[:n_components].T, yk) + mean_values
 
 
-def save(Vt, s, mean_values, triangles, filename):
+def save(Vt, s, n_components, mean_values, triangles, filename):
     """
     Store the U, s, Vt and mean of all the asf datafiles given by the asf
     files.
@@ -52,7 +66,7 @@ def save(Vt, s, mean_values, triangles, filename):
         triangles = Vtm[2]
 
     """
-    saving = np.asarray([Vt, s, [mean_values], triangles])
+    saving = np.asarray([Vt, s, n_components, [mean_values], triangles])
     np.save(filename, saving)
 
 
@@ -77,10 +91,11 @@ def load(filename):
 
     Vt = Vtm[0]
     s = Vtm[1]
-    mean_values = Vtm[2][0]
-    triangles = Vtm[3]
+    n_components = Vtm[2]
+    mean_values = Vtm[3][0]
+    triangles = Vtm[4]
 
-    return Vt, s, mean_values, triangles
+    return Vt, s, n_components, mean_values, triangles
 
 
 def flatten_feature_vectors(data, dim=0):
