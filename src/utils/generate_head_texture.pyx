@@ -28,7 +28,12 @@ cdef inline np.ndarray[double, ndim=1] cartesian2barycentric(
         ndarray (of dim 3) weights of the barycentric coordinates
 
     """
-    a = np.array([[r1_x, r2_x, r3_x], [r1_y, r2_y, r3_y], [1, 1, 1]])
+    a = np.array([
+        [r1_x, r2_x, r3_x],
+        [r1_y, r2_y, r3_y],
+        [1, 1, 1]
+    ])
+
     b = np.array([r_x, r_y, 1])
 
     return np.linalg.solve(a, b)
@@ -77,10 +82,7 @@ def fill_triangle(np.ndarray[unsigned char, ndim=1] src,
     cdef int h = y_max - y_min
     cdef int new_offset
 
-    cdef np.ndarray src_reshaped = src[offset:offset + (w * h * 3)].reshape((h, w, 3))
-
-    #print src_reshaped
-    #print '(', w, '*', h, '*', 3, ') * ', ' = ', offset
+    #cdef np.ndarray src_reshaped = src[offset:offset + (w * h * 3)].reshape((h, w, 3))
 
     for j, y in enumerate(xrange(y_min, y_max)):
         for i, x in enumerate(xrange(x_min, x_max)):
@@ -93,40 +95,38 @@ def fill_triangle(np.ndarray[unsigned char, ndim=1] src,
 
             # notice we have a soft margin of -0.00001, which makes sure there are no
             # gaps due to rounding issues
-            if s >= -0.000000001 and t >= -0.000000001 and s + t <= 1.0:
+            if s >= -0.01 and t >= -0.01 and s + t <= 1.0:
                 dst[y, x, :] = src_reshaped[j, i, :]
 
-    new_offset = (w * h * 3)
-    return new_offset
+    return (w * h * 3)
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def get_row_colors_triangle(np.ndarray[unsigned char, ndim=3] src,
-                            int src_x1, int src_y1, int src_x2, int src_y2,
-                            int src_x3, int src_y3,
-                            int dst_x1, int dst_y1, int dst_x2, int dst_y2,
-                            int dst_x3, int dst_y3):
-    """
-    Fill a triangle by applying the Barycentric Algorithm for deciding if a
-    point lies inside or outside a triangle.
-    """
-    cdef int x_min = min(dst_x1, min(dst_x2, dst_x3))
-    cdef int x_max = max(dst_x1, max(dst_x2, dst_x3))
-    cdef int y_min = min(dst_y1, min(dst_y2, dst_y3))
-    cdef int y_max = max(dst_y1, max(dst_y2, dst_y3))
+def fill_triangle_src_dst(np.ndarray[unsigned char, ndim=3] src,
+                       np.ndarray[unsigned char, ndim=3] dst,
+                       int src_x1, int src_y1, int src_x2, int src_y2,
+                       int src_x3, int src_y3,
+                       int dst_x1, int dst_y1, int dst_x2, int dst_y2,
+                       int dst_x3, int dst_y3,
+                       int offset_x, int offset_y):
+
+    cdef np.ndarray triangle_x = np.array([dst_x1, dst_x2, dst_x3])
+    cdef np.ndarray triangle_y = np.array([dst_y1, dst_y2, dst_y3])
+
+    cdef int x_min = np.argmin(triangle_x)
+    cdef int x_max = np.argmax(triangle_x)
+    cdef int y_min = np.argmin(triangle_y)
+    cdef int y_max = np.argmax(triangle_y)
 
     cdef np.ndarray L = np.zeros([3, 1], dtype=DTYPE_float32)
     cdef np.ndarray matrix = np.full([3, 3], fill_value=1, dtype=DTYPE_int)
 
     cdef np.ndarray src_loc = np.zeros([3, 1], dtype=DTYPE_float64)
     cdef np.ndarray dst_loc = np.zeros([3, 1], dtype=DTYPE_float64)
-    cdef np.ndarray dst = np.full(
-        [y_max - y_min, x_max - x_min, 3], fill_value=255, dtype=DTYPE_float64
-    )
 
-    for j, y in enumerate(xrange(y_min, y_max)):
-        for i, x in enumerate(xrange(x_min, x_max)):
+    for j, y in enumerate(xrange(triangle_y[y_min], triangle_y[y_max])):
+        for i, x in enumerate(xrange(triangle_x[x_min], triangle_x[x_max])):
             dst_loc = cartesian2barycentric(
                 dst_x1, dst_y1, dst_x2, dst_y2, dst_x3, dst_y3, x, y
             )
@@ -134,9 +134,7 @@ def get_row_colors_triangle(np.ndarray[unsigned char, ndim=3] src,
             s = dst_loc[0]
             t = dst_loc[1]
 
-            # notice we have a soft margin of -0.00001, which makes sure there are no
-            # gaps due to rounding issues
-            if s >= -0.000001 and t >= -0.000001 and s + t <= 1.0:
+            if s >= -0.001 and t >= -0.001 and s + t <= 1.001:
                 L[0] = s
                 L[1] = t
                 L[2] = 1 - s - t
@@ -148,30 +146,28 @@ def get_row_colors_triangle(np.ndarray[unsigned char, ndim=3] src,
                     L
                 )
 
-                dst[j, i, :] = src[src_loc[1][0], src_loc[0][0], :]
-
-    return dst
+                dst[y, x, :] = src[src_loc[1][0], src_loc[0][0], :]
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def get_colors_triangle(np.ndarray[unsigned char, ndim=3] src,
-                        np.ndarray[unsigned char, ndim=3] dst,
-                        int src_x1, int src_y1, int src_x2, int src_y2,
-                        int src_x3, int src_y3,
-                        int dst_x1, int dst_y1, int dst_x2, int dst_y2,
-                        int dst_x3, int dst_y3):
+def get_row_colors_triangle(np.ndarray[unsigned char, ndim=3] src,
+                            np.ndarray[unsigned char, ndim=3] dst,
+                            int src_x1, int src_y1, int src_x2, int src_y2,
+                            int src_x3, int src_y3,
+                            int dst_x1, int dst_y1, int dst_x2, int dst_y2,
+                            int dst_x3, int dst_y3):
     """
     Fill a triangle by applying the Barycentric Algorithm for deciding if a
     point lies inside or outside a triangle.
     """
-    cdef int x_min = min(dst_x1, min(dst_x2, dst_x3))
-    cdef int x_max = max(dst_x1, max(dst_x2, dst_x3))
-    cdef int y_min = min(dst_y1, min(dst_y2, dst_y3))
-    cdef int y_max = max(dst_y1, max(dst_y2, dst_y3))
+    cdef np.ndarray triangle_x = np.array([dst_x1, dst_x2, dst_x3])
+    cdef np.ndarray triangle_y = np.array([dst_y1, dst_y2, dst_y3])
 
-    cdef float s
-    cdef float t
+    cdef int x_min = np.argmin(triangle_x)
+    cdef int x_max = np.argmax(triangle_x)
+    cdef int y_min = np.argmin(triangle_y)
+    cdef int y_max = np.argmax(triangle_y)
 
     cdef np.ndarray L = np.zeros([3, 1], dtype=DTYPE_float32)
     cdef np.ndarray matrix = np.full([3, 3], fill_value=1, dtype=DTYPE_int)
@@ -179,18 +175,19 @@ def get_colors_triangle(np.ndarray[unsigned char, ndim=3] src,
     cdef np.ndarray src_loc = np.zeros([3, 1], dtype=DTYPE_float64)
     cdef np.ndarray dst_loc = np.zeros([3, 1], dtype=DTYPE_float64)
 
-    for y in xrange(y_min, y_max):
-        for x in xrange(x_min, x_max):
+    for j, y in enumerate(xrange(triangle_y[y_min], triangle_y[y_max])):
+        for i, x in enumerate(xrange(triangle_x[x_min], triangle_x[x_max])):
             dst_loc = cartesian2barycentric(
-                dst_x1, dst_y1, dst_x2, dst_y2, dst_x3, dst_y3, x, y
+                triangle_x[0], triangle_y[0],
+                triangle_x[1], triangle_y[1],
+                triangle_x[2], triangle_y[2],
+                x, y
             )
 
             s = dst_loc[0]
             t = dst_loc[1]
 
-            # notice we have a soft margin of -0.00001, which makes sure there are no
-            # gaps due to rounding issues
-            if s >= -0.000001 and t >= -0.000001 and s + t <= 1.0:
+            if s >= -0.01 and t >= -0.01 and s + t <= 1.001:
                 L[0] = s
                 L[1] = t
                 L[2] = 1 - s - t

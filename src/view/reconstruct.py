@@ -77,42 +77,43 @@ class ImageCanvas(Widget):
         self.image.source = self.filename_image
         self.canvas.ask_update()
 
-    def build_texture(self, r_shape, r_texture, triangles):
-        return
-        #self.texture.clear()
+    def build_texture(self, mean_shape, r_shape, r_texture, triangles):
+        self.texture.clear()
+        image_width, image_height = self.get_rendered_size()
+        bary_centric_range = np.linspace(0, 1, num=20)
 
-        #image_width, image_height = self.get_rendered_size()
+        texture = Texture.create(size=(image_width, image_height), colorfmt='bgr')
+        buf = np.zeros((image_width, image_height, 3), dtype=np.uint8)
 
-        #bary_centric_range = np.linspace(0, 1, num=20)
-        #texture = Texture.create(size=(image_width, image_height), colorfmt='bgr')
-        #buf = np.zeros((image_width, image_height, 3), dtype=np.uint8)
+        offset = 0
 
-        #offset = 0
+        for t, tri in enumerate(triangles):
+            points = r_shape[tri]
 
-        #for t, tri in enumerate(triangles):
-        #    src_p1, src_p2, src_p3 = r_shape[tri]
+            x = points[:, 0] * image_width + self.get_image_left(image_width)
+            y = (1.0 - points[:, 1]) * image_height + self.get_image_bottom(image_height)
 
-        #    x = r_shape[:, 0] * image_width + self.get_image_left(image_width)
-        #    y = (1.0 - r_shape[:, 1]) * image_height + self.get_image_bottom(image_height)
+            src_p1_x, src_p2_x, src_p3_x = x
+            src_p1_y, src_p2_y, src_p3_y = y
 
-        #    for t, tri in enumerate(triangles):
-        #        offset += fill_triangle(
-        #            r_texture, buf,
-        #            src_p1[0], src_p1[1],
-        #            src_p2[0], src_p2[1],
-        #            src_p3[0], src_p3[1],
-        #            dst_p1[0], dst_p1[1],
-        #            dst_p2[0], dst_p2[1],
-        #            dst_p3[0], dst_p3[1],
-        #            offset,
-        #            t
-        #        )
+            for t, tri in enumerate(triangles):
+                offset += fill_triangle(
+                    r_texture, buf,
+                    src_p1_x, src_p1_y,
+                    src_p2_x, src_p2_y,
+                    src_p3_x, src_p3_y,
+                    dst_p1_x, dst_p1_y,
+                    dst_p2_x, dst_p2_y,
+                    dst_p3_x, dst_p3_y,
+                    offset,
+                    t
+                )
 
-        #        print offset
+                print offset
 
-        #    #p1 = [x[0], y[0]]
-        #    #p2 = [x[1], y[1]]
-        #    #p3 = [x[2], y[2]]
+            #p1 = [x[0], y[0]]
+            #p2 = [x[1], y[1]]
+            #p3 = [x[2], y[2]]
 
 
         ##buf = b''.join(map(chr, buf))

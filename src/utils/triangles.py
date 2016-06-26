@@ -1,8 +1,10 @@
 import numpy as np
 import cv2
 
-from utils.generate_head_texture import fill_triangle, get_colors_triangle
+from utils.generate_head_texture import fill_triangle, fill_triangle_src_dst
 
+import pca
+import aam
 
 def cartesian2barycentric(r1, r2, r3, r):
     """
@@ -62,25 +64,66 @@ def draw_shape(image, points, triangles, multiply=True):
 
     for i, p in enumerate(points):
         point_index = int(point_indices[i])
-        cv2.putText(image, str(point_index), (p[0], p[1]),
+        #cv2.putText(image, str(point_index), (p[0], p[1]),
+        #            cv2.FONT_HERSHEY_SIMPLEX, .5, (100, 0, 255))
+        cv2.putText(image, str(i), (p[0], p[1]),
                     cv2.FONT_HERSHEY_SIMPLEX, .5, (100, 0, 255))
         cv2.circle(image, tuple(p), 3, color=(0, 255, 100))
 
 
-def draw_texture(src, dest, Vt, points2d_src, points2d_dst, texture, triangles, n_components):
-    # texture = np.asarray(texture, dtype=np.uint8).reshape((-1, 3))
+def draw_texture(src, dst, Vt, points2d_src, points2d_dst, texture, triangles, n_components):
     texture = np.asarray(texture, np.uint8)
     offset = 0
 
     for t, tri in enumerate(triangles):
-        src_p1, src_p2, src_p3 = points2d_src[tri]
         dst_p1, dst_p2, dst_p3 = points2d_dst[tri]
 
         offset += fill_triangle(
-            texture, dest,
+            texture, dst,
             dst_p1[0], dst_p1[1],
             dst_p2[0], dst_p2[1],
             dst_p3[0], dst_p3[1],
             offset,
             t
+        )
+
+
+def reconstruct_texture(src, dst, Vt, points2d_src, points2d_dst, mean_texture, triangles, n_components):
+    # S_mean format
+    h, w, c = src.shape
+    input_texture = np.full((h, w, 3), fill_value=0, dtype=np.uint8)
+    aam.sample_from_triangles(src, points2d_src, points2d_dst, triangles, input_texture)
+
+    hull = cv2.convexHull(points2d_dst, returnPoints=True)
+    offset_x, offset_y, w_slice, h_slice = cv2.boundingRect(hull)
+
+    input_texture = input_texture[offset_y: offset_y + h_slice,
+                                  offset_x: offset_x + w_slice].flatten()
+
+    # Still in  S_mean format
+    r_texture = pca.reconstruct(input_texture, Vt, mean_texture)
+
+    # Make an image from the float data
+    r_texture = np.asarray(r_texture, np.uint8).reshape((h_slice, w_slice, 3))
+
+    offset = 0
+
+    # subtract the offset
+    points2d_dst[:, 0] -= offset_x
+    points2d_dst[:, 1] -= offset_y
+
+    for t, tri in enumerate(triangles):
+        src_p1, src_p2, src_p3 = points2d_src[tri]
+        dst_p1, dst_p2, dst_p3 = points2d_dst[tri]
+
+        fill_triangle_src_dst(
+            r_texture, src,
+            dst_p1[0], dst_p1[1],
+            dst_p2[0], dst_p2[1],
+            dst_p3[0], dst_p3[1],
+            src_p1[0], src_p1[1],
+            src_p2[0], src_p2[1],
+            src_p3[0], src_p3[1],
+            offset_x,
+            offset_y
         )

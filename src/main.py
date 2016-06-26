@@ -186,12 +186,61 @@ def show_pca_model(args):
     mean_values_shape[:, 1] = mean_values_shape[:, 1] * h
 
     while True:
+        #draw_texture(input_image, image, Vt_texture, input_points, mean_values_shape,
+        #             mean_values_texture, triangles, n_texture_components)
+        #draw_shape(image, mean_values_shape, triangles, multiply=False)
         draw_texture(input_image, image, Vt_texture, input_points, mean_values_shape,
                      mean_values_texture, triangles, n_texture_components)
-        #draw_shape(image, mean_values_shape, triangles, multiply=False)
 
         cv2.imshow('input_image', input_image)
         cv2.imshow('image', image)
+        k = cv2.waitKey(0) & 0xFF
+
+        if k == 27:
+            break
+
+    cv2.destroyAllWindows()
+
+
+def show_reconstruction(args):
+    assert args.model_shape_file, '--model_texture_file needs to be provided to save the pca model'
+    assert args.model_texture_file, '--model_texture_file needs to be provided to save the pca model'
+
+    from utils.triangles import draw_shape, draw_texture, reconstruct_texture
+
+    Vt_shape, s, n_shape_components, mean_values_shape, triangles = pca.load(args.model_shape_file)
+    Vt_texture, s_texture, n_texture_components, mean_values_texture, _ = pca.load(args.model_texture_file)
+
+    image = np.full((480, 640, 3), fill_value=0, dtype=np.uint8)
+    image_2 = np.full((480, 640, 3), fill_value=0, dtype=np.uint8)
+
+    imm_points = imm.IMMPoints(filename='data/imm_face_db/40-3m.asf')
+    input_image = imm_points.get_image()
+    input_points = imm_points.get_points()
+    h, w, c = input_image.shape
+
+    input_points[:, 0] = input_points[:, 0] * w
+    input_points[:, 1] = input_points[:, 1] * h
+
+    mean_values_shape = mean_values_shape.reshape((58, 2))
+    mean_values_shape[:, 0] = mean_values_shape[:, 0] * w
+    mean_values_shape[:, 1] = mean_values_shape[:, 1] * h
+
+    while True:
+        #reconstruct_texture(input_image, image, Vt_texture, input_points, mean_values_shape,
+        #                    mean_values_texture, triangles, n_texture_components)
+        reconstruct_texture(input_image, input_image, Vt_texture, input_points, mean_values_shape,
+                            mean_values_texture, triangles, n_texture_components)
+        draw_texture(input_image, image_2, Vt_texture, input_points, mean_values_shape,
+                     mean_values_texture, triangles, n_texture_components)
+
+        #draw_shape(image_2, mean_values_shape, triangles, multiply=False)
+        #draw_shape(input_image, input_points, triangles, multiply=False)
+
+        cv2.imshow('original', imm_points.get_image())
+        cv2.imshow('reconstructed', input_image)
+        cv2.imshow('image_2', image_2)
+
         k = cv2.waitKey(0) & 0xFF
 
         if k == 27:
@@ -212,7 +261,8 @@ def main():
     elif args.save_pca_texture:
         save_pca_model_texture(args)
     elif args.reconstruct:
-        reconstruct_with_model(args)
+        #reconstruct_with_model(args)
+        show_reconstruction(args)
 
 if __name__ == '__main__':
     main()

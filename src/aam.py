@@ -5,8 +5,7 @@ import cv2
 
 # local imports
 import pca
-from utils.generate_head_texture import fill_triangle, get_colors_triangle, \
-    get_row_colors_triangle
+from utils.generate_head_texture import fill_triangle, get_row_colors_triangle
 import utils.triangles as tu
 
 logging.basicConfig(level=logging.INFO,
@@ -72,17 +71,29 @@ def build_shape_feature_vectors(files, get_points, flattened=False):
     return points
 
 
-def sample_from_triangles(src, points2d_src, points2d_dst, triangles):
-    # texture = np.asarray(texture, dtype=np.uint8).reshape((-1, 3))
+def sample_from_triangles(src, points2d_src, points2d_dst, triangles, dst):
+    """
+    Get pixels from within the  triangles [[p1, p2, p3]_0, .. [p1, p2, p3]_n].
+    Args:
+        src(ndarray, dtype=uint8): input image
+        points2d_src(ndarray, dtype=np.int32): shape array [[x, y], ... [x, y]]
+        points2d_dst(ndarray, dtype=np.int32): shape array [[x, y], ... [x, y]]
+        triangles(ndarray, ndim=3, dtype=np.int32): shape array [[p1, p2, p3]_0, .. [p1, p2, p3]_n].
+
+    returns:
+        ndarray(dtype=uint8): flattened array of bounding boxes around the
+        given triangles(in order).
+
+    """
+
     triangles_pixels = []
-    pixels = 0
 
     for tri in triangles:
         src_p1, src_p2, src_p3 = points2d_src[tri]
         dst_p1, dst_p2, dst_p3 = points2d_dst[tri]
 
-        dst = get_row_colors_triangle(
-            src,
+        get_row_colors_triangle(
+            src, dst,
             src_p1[0], src_p1[1],
             src_p2[0], src_p2[1],
             src_p3[0], src_p3[1],
@@ -91,13 +102,9 @@ def sample_from_triangles(src, points2d_src, points2d_dst, triangles):
             dst_p3[0], dst_p3[1]
         )
 
-        pixels += dst.flatten().shape[0]
+        #triangles_pixels.extend(dst.flatten())
 
-        triangles_pixels.extend(dst.flatten())
-
-    result = np.asarray(triangles_pixels, dtype=np.uint8)
-
-    return result
+    #return np.asarray(triangles_pixels, dtype=np.uint8)
 
 
 def build_texture_feature_vectors(files, get_image_with_shape, mean_shape, triangles):
@@ -116,6 +123,9 @@ def build_texture_feature_vectors(files, get_image_with_shape, mean_shape, trian
     mean_shape_scaled[:, 0] = mean_shape_scaled[:, 0] * 640
     mean_shape_scaled[:, 1] = mean_shape_scaled[:, 1] * 480
 
+    hull = cv2.convexHull(mean_shape_scaled, returnPoints=True)
+    x, y, w_slice, h_slice = cv2.boundingRect(hull)
+
     for i, f in enumerate(files):
         image, shape = get_image_with_shape(f)
         h, w, c = image.shape
@@ -123,25 +133,22 @@ def build_texture_feature_vectors(files, get_image_with_shape, mean_shape, trian
         shape[:, 0] = shape[:, 0] * w
         shape[:, 1] = shape[:, 1] * h
 
-        triangles_colors = sample_from_triangles(
-            image, shape, mean_shape_scaled, triangles
-            )
+        dst = np.full((h, w, 3), fill_value=0, dtype=np.uint8)
 
-        mean_texture.append(triangles_colors)
+        triangles_colors = sample_from_triangles(
+            image, shape, mean_shape_scaled, triangles, dst
+        )
+
+        dst_flattened = dst[y: y + h_slice, x: x + w_slice].flatten()
+        mean_texture.append(dst_flattened)
+
         logger.info('processed file: {} {}/{}'.format(f, i, len(files)))
 
-        # cv2.imshow('image', image)
-        # k = cv2.waitKey(0) & 0xFF
-
-        # if k == 27:
-        #     break
-    mean_texture = np.asarray(mean_texture)
-    #mean_texture = pca.flatten_feature_vectors(mean_texture)
-
-    return mean_texture
+    return np.asarray(mean_texture)
 
 
 def get_pixel_values(image, points):
+    """ docstring """
     h, w, c = image.shape
 
     points[:, 0] = points[:, 0] * w
