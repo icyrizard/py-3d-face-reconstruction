@@ -2,10 +2,11 @@ import numpy as np
 import cv2
 import pytest
 
-import imm_points
 import aam
 import pca
+import imm_points as imm
 
+from utils import triangles as tri
 
 def test_build_mean_aan():
     imm_points = np.array([
@@ -45,10 +46,39 @@ def test_zero_mean_aan():
     np.testing.assert_array_equal(zero_mean, expected)
 
 
+def test_build_texture_feature_vectors():
+    Vt_shape, s, n_shape_components, mean_value_points, triangles = pca.load('data/test_data/pca_shape_model.npy')
+    Vt_texture, s_texture, n_texture_components, mean_values_texture, _ = pca.load('data/test_data/pca_texture_model.npy')
+
+    InputPoints = imm.IMMPoints(filename='data/imm_face_db/40-3m.asf')
+    input_image = InputPoints.get_image()
+
+    MeanPoints = imm.IMMPoints(points_list=mean_value_points)
+    mean_points = MeanPoints.get_scaled_points(input_image.shape)
+    input_points = InputPoints.get_scaled_points(input_image.shape)
+
+    tri.reconstruct_texture(input_image, input_image, Vt_texture, input_points, mean_points,
+                            mean_values_texture, triangles, n_texture_components)
+    dst = tri.get_texture(mean_points, mean_values_texture)
+
+    assert np.mean(input_points) > 1.0, 'should be greater than 1.0, because \
+        it array should be scaled to the image width and height'
+    assert np.mean(mean_points) > 1.0, 'should be greater than 1.0, because \
+        it array should be scaled to the image width and height'
+
+    #cv2.imshow('original', imm_points.get_image())
+    #cv2.imshow('reconstructed', input_image)
+    #cv2.imshow('main face', dst)
+
+    #cv2.waitKey(0) & 0xFF
+
+    #cv2.destroyAllWindows()
+
+
 @pytest.mark.skipif(True, reason='not suitable for pytest')
 def test_get_pixel_values():
     asf_file = '../data/imm_face_db/40-2m.asf'
-    imm = imm_points.IMMPoints(filename=asf_file)
+    Vt, s, n_components, mean_shape, triangles = pca.load(args.model_shape_file)
 
     points = imm.get_points()
     image = imm.get_image()

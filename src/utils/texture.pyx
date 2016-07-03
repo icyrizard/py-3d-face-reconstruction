@@ -57,10 +57,9 @@ cdef inline np.ndarray[double, ndim=2] barycentric2cartesian(
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def fill_triangle(np.ndarray[unsigned char, ndim=1] src,
+def fill_triangle(np.ndarray[unsigned char, ndim=3] src,
                   np.ndarray[unsigned char, ndim=3] dst,
-                  int x1, int y1, int x2, int y2, int x3, int y3, int offset,
-                  int index):
+                  int x1, int y1, int x2, int y2, int x3, int y3):
     """
     Fill a triangle by applying the Barycentric Algorithm for deciding if a
     point lies inside or outside a triangle.
@@ -96,20 +95,18 @@ def fill_triangle(np.ndarray[unsigned char, ndim=1] src,
             # notice we have a soft margin of -0.00001, which makes sure there are no
             # gaps due to rounding issues
             if s >= -0.01 and t >= -0.01 and s + t <= 1.0:
-                dst[y, x, :] = src_reshaped[j, i, :]
-
-    return (w * h * 3)
+                dst[y, x, :] = src[y, x, :]
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def fill_triangle_src_dst(np.ndarray[unsigned char, ndim=3] src,
-                       np.ndarray[unsigned char, ndim=3] dst,
-                       int src_x1, int src_y1, int src_x2, int src_y2,
-                       int src_x3, int src_y3,
-                       int dst_x1, int dst_y1, int dst_x2, int dst_y2,
-                       int dst_x3, int dst_y3,
-                       int offset_x, int offset_y):
+                          np.ndarray[unsigned char, ndim=3] dst,
+                          int src_x1, int src_y1, int src_x2, int src_y2,
+                          int src_x3, int src_y3,
+                          int dst_x1, int dst_y1, int dst_x2, int dst_y2,
+                          int dst_x3, int dst_y3,
+                          int offset_x, int offset_y):
 
     cdef np.ndarray triangle_x = np.array([dst_x1, dst_x2, dst_x3])
     cdef np.ndarray triangle_y = np.array([dst_y1, dst_y2, dst_y3])
@@ -151,12 +148,12 @@ def fill_triangle_src_dst(np.ndarray[unsigned char, ndim=3] src,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def get_row_colors_triangle(np.ndarray[unsigned char, ndim=3] src,
-                            np.ndarray[unsigned char, ndim=3] dst,
-                            int src_x1, int src_y1, int src_x2, int src_y2,
-                            int src_x3, int src_y3,
-                            int dst_x1, int dst_y1, int dst_x2, int dst_y2,
-                            int dst_x3, int dst_y3):
+def fill_triangle_src_dst(np.ndarray[unsigned char, ndim=3] src,
+                          np.ndarray[unsigned char, ndim=3] dst,
+                          int src_x1, int src_y1, int src_x2, int src_y2,
+                          int src_x3, int src_y3,
+                          int dst_x1, int dst_y1, int dst_x2, int dst_y2,
+                          int dst_x3, int dst_y3):
     """
     Fill a triangle by applying the Barycentric Algorithm for deciding if a
     point lies inside or outside a triangle.

@@ -5,28 +5,39 @@ import numpy as np
 import argparse
 import os
 
+import aam
 
-class IMMPoints():
+
+class IMMPoints(aam.AAMPoints):
     """Accepts IMM datapoint file which can be shown or used"""
-    def __init__(self, filename=None, points=None):
+    def __init__(self, filename=None, points_list=None):
         """
         Args:
             filename: optional .asf file with the imm format
             points: optional list of x,y points
         """
-        self.points = points if points is not None else []
+        assert filename is not None or points_list is not None, 'filename or \
+         a ndarray of points list should be given'
+
         self.filename = filename
 
         if filename:
-            self.import_file(filename)
+            points_list = self.import_file(filename)
+
+        aam.AAMPoints.__init__(
+            self, normalized_flattened_points_list=points_list.flatten(),
+            actual_shape=(58, 2)
+        )
 
     def get_points(self):
-        return self.points
+        return self.points_list
 
     def get_image(self):
         return cv2.imread(self.image_file)
 
     def import_file(self, filename):
+        points_list = []
+
         with open(filename, 'r') as f:
             lines = f.readlines()
             data = lines[16:74]
@@ -34,9 +45,9 @@ class IMMPoints():
             self.image_file = "{}/{}".format(dir_name, lines[-1].strip())
 
             for d in data:
-                self.points.append(d.split()[2:4])
+                points_list.append(d.split()[2:4])
 
-        self.points = np.asarray(self.points, dtype='f')
+        return np.asarray(points_list, dtype='f')
 
     def draw_triangles(self, image, points, multiply=True):
         if multiply:
@@ -61,16 +72,16 @@ class IMMPoints():
             cv2.circle(image, tuple(p), 3, color=(0, 255, 100))
 
     def show_on_image(self, image, window_name='image', multiply=True):
-        self.draw_triangles(image, self.points, multiply=multiply)
+        self.draw_triangles(image, self.points_list, multiply=multiply)
 
     def show(self, window_name='image'):
         """show the image and datapoints on the image"""
-        assert(len(self.points) > 0)
+        assert(len(self.points_list) > 0)
         assert(len(self.filename) > 0)
 
         image = self.get_image()
 
-        self.draw_triangles(image, self.points)
+        self.draw_triangles(image, self.points_list)
 
 
 def get_imm_points(files):

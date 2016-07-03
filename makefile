@@ -11,9 +11,9 @@ all: $(TARGETS)
 include actions.mk
 
 data: data/imm_face_db
-utils: generate_head_texture.so
+utils: texture.so
 
-generate_head_texture.so: src/utils/generate_head_texture.pyx
+texture.so: src/utils/texture.pyx
 	(cd src/utils; python setup.py build_ext --inplace)
 
 
