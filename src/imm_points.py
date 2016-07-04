@@ -30,7 +30,7 @@ class IMMPoints(aam.AAMPoints):
         )
 
     def get_points(self):
-        return self.points_list
+        return self.normalized_flattened_points_list
 
     def get_image(self):
         return cv2.imread(self.image_file)

@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-from utils.generate_head_texture import fill_triangle, fill_triangle_src_dst
+from .texture import fill_triangle, fill_triangle_src_dst
 
 import pca
 import aam
@@ -102,10 +102,10 @@ def reconstruct_texture(src, dst, Vt, SrcPoints, DstPoints,
     ## Still in  S_mean format
     r_texture = pca.reconstruct(input_texture, Vt, mean_texture)
 
-    # Make an image from the float data
+    ## Make an image from the float data
     r_texture = np.asarray(r_texture, np.uint8).reshape((h_slice, w_slice, 3))
 
-    ## subtract the offset
+    ### subtract the offset
     points2d_dst[:, 0] -= offset_x
     points2d_dst[:, 1] -= offset_y
 
@@ -114,13 +114,11 @@ def reconstruct_texture(src, dst, Vt, SrcPoints, DstPoints,
         dst_p1, dst_p2, dst_p3 = points2d_dst[tri]
 
         fill_triangle_src_dst(
-            r_texture, src,
+            r_texture, dst,
             dst_p1[0], dst_p1[1],
             dst_p2[0], dst_p2[1],
             dst_p3[0], dst_p3[1],
             src_p1[0], src_p1[1],
             src_p2[0], src_p2[1],
-            src_p3[0], src_p3[1],
-            offset_x,
-            offset_y
+            src_p3[0], src_p3[1]
         )

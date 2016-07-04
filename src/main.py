@@ -5,12 +5,13 @@ import sys
 
 # installed packages
 import cv2
-import numpy as np
 
 # local imports
 import pca
 import aam
 import imm_points as imm
+
+from utils import utils
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(name)s: %(message)s')
@@ -24,6 +25,11 @@ def add_parser_options():
     pca_group.add_argument(
         '--reconstruct', action='store_true',
         help='Reconstruct one face with a given pca model'
+    )
+
+    pca_group.add_argument(
+        '--show_kivy', action='store_true',
+        help='Reconstruct using kivy as a GUI'
     )
 
     pca_group.add_argument(
@@ -148,7 +154,7 @@ def reconstruct_with_model(args):
 
     from view.reconstruct import ReconstructApp
 
-    Vt_shape, s, n_shape_components, mean_values_shape, triangles = pca.load(args.model_shape_file)
+    Vt_shape, s, n_shape_components, mean_value_points, triangles = pca.load(args.model_shape_file)
     Vt_texture, s_texture, n_texture_components, mean_values_texture, _ = pca.load(args.model_texture_file)
 
     app = ReconstructApp()
@@ -157,7 +163,7 @@ def reconstruct_with_model(args):
         args=args,
         eigenv_shape=Vt_shape,
         eigenv_texture=Vt_texture,
-        mean_values_shape=mean_values_shape,
+        mean_value_points=mean_value_points,
         n_shape_components=n_shape_components,
         mean_values_texture=mean_values_texture,
         n_texture_components=n_texture_components,
@@ -173,7 +179,7 @@ def show_pca_model(args):
 
     from utils.triangles import draw_shape, get_texture
 
-    Vt_shape, s, n_shape_components, mean_values_shape, triangles = pca.load(args.model_shape_file)
+    Vt_shape, s, n_shape_components, mean_value_points, triangles = pca.load(args.model_shape_file)
     Vt_texture, s_texture, n_texture_components, mean_values_texture, _ = pca.load(args.model_texture_file)
 
     imm_points = imm.IMMPoints(filename='data/imm_face_db/40-1m.asf')
@@ -184,12 +190,12 @@ def show_pca_model(args):
     input_points[:, 0] = input_points[:, 0] * w
     input_points[:, 1] = input_points[:, 1] * h
 
-    mean_values_shape = mean_values_shape.reshape((58, 2))
-    mean_values_shape[:, 0] = mean_values_shape[:, 0] * w
-    mean_values_shape[:, 1] = mean_values_shape[:, 1] * h
+    mean_value_points = mean_value_points.reshape((58, 2))
+    mean_value_points[:, 0] = mean_value_points[:, 0] * w
+    mean_value_points[:, 1] = mean_value_points[:, 1] * h
 
     while True:
-        dst = get_texture(mean_values_shape, mean_values_texture)
+        dst = get_texture(mean_value_points, mean_values_texture)
 
         cv2.imshow('input_image', input_image)
         cv2.imshow('image', dst)
@@ -205,8 +211,6 @@ def show_reconstruction(args):
     assert args.model_shape_file, '--model_texture_file needs to be provided to save the pca model'
     assert args.model_texture_file, '--model_texture_file needs to be provided to save the pca model'
 
-    from utils import triangles as tri
-
     Vt_shape, s, n_shape_components, mean_value_points, triangles = pca.load(args.model_shape_file)
     Vt_texture, s_texture, n_texture_components, mean_values_texture, _ = pca.load(args.model_texture_file)
 
@@ -217,10 +221,18 @@ def show_reconstruction(args):
     MeanPoints.get_scaled_points(input_image.shape)
 
     while True:
-        tri.reconstruct_texture(input_image, input_image, Vt_texture,
-                                InputPoints, MeanPoints,
-                                mean_values_texture, triangles, n_texture_components)
-        dst = tri.get_texture(MeanPoints, mean_values_texture)
+        utils.reconstruct_texture(
+            input_image,  # src image
+            input_image,  # dst image
+            Vt_texture,   # Vt
+            InputPoints,  # shape points input
+            MeanPoints,   # shape points mean
+            mean_values_texture,  # mean texture
+            triangles,  # triangles
+            n_texture_components  # learned n_texture_components
+        )
+
+        dst = utils.get_texture(MeanPoints, mean_values_texture)
 
         cv2.imshow('original', InputPoints.get_image())
         cv2.imshow('reconstructed', input_image)
@@ -248,6 +260,8 @@ def main():
     elif args.reconstruct:
         #reconstruct_with_model(args)
         show_reconstruction(args)
+    elif args.show_kivy:
+        reconstruct_with_model(args)
 
 if __name__ == '__main__':
     main()

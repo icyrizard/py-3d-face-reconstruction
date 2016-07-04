@@ -6,17 +6,19 @@ import cv2
 # local imports
 import pca
 import utils.texture as tx
-import utils.triangles as tu
+from utils import utils
 
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s %(levelname)s %(name)s: %(message)s')
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(name)s: %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 
 class AAMPoints():
     """
     Object to store AAM points / landmarks. Tries to keep the scaling of
-    the shape parameters transparent.
+    these points transparent.
     """
     def __init__(self, normalized_flattened_points_list=None, points_list=None, actual_shape=()):
         self.normalized_flattened_points_list = normalized_flattened_points_list
@@ -25,12 +27,27 @@ class AAMPoints():
         self.bounding_box = None
 
     def get_bounding_box(self):
+        """
+        Get the bounding box around the points.
+        """
         if self.bounding_box is None:
             return self.calculate_bounding_box()
+
         return self.bounding_box
 
-    def get_scaled_points(self, shape, rescale=True):
-        if self.points_list is None:
+    def get_scaled_points(self, shape, rescale=False):
+        """
+        Scale the normalized flattened points list to a scale given by 'shape'.
+        The x and y values should be scaled to the width and height of the image.
+        Args:
+            shape(tuple): (height, width)
+            rescal(boolean): flag if we should rescale or not because if we
+                already scaled, we are not going to do it again by
+                default.
+        Returns:
+            ndarray scaled to 'shape' width and height.
+        """
+        if self.points_list is None or rescale:
             self.points_list = self.normalized_flattened_points_list
 
             if len(self.actual_shape):
@@ -49,6 +66,10 @@ class AAMPoints():
         Calculate bounding box in the **scaled** points list
         The empasis on on scaled because the convexHull does not support
         small values, the normalized_flattened_points_list does not work.
+
+        Use get_scaled_points first, with a shape that is needed. The shape
+        should be the dimensions of the out image, example (480, 640), ie., (height,
+        width)
         """
         assert self.points_list is not None, \
             'the list points already need to be scaled order to correctly work'
@@ -201,7 +222,6 @@ def get_pixel_values(image, points):
 
     x, y, w, h = rect
 
-    # pixels = np.zeros((h, w, c), dtype=np.uint8)
     for i in np.linspace(0, 1, num=150):
         for j in np.linspace(0, 1, num=150):
             y_loc_g = int(i * h + y)

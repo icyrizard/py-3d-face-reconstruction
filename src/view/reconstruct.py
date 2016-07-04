@@ -20,8 +20,8 @@ from functools import partial
 from math import cos, sin, pi
 
 import imm_points as imm
-from utils.triangles import draw_texture
-from utils.generate_head_texture import fill_triangle
+from utils import utils
+from utils.texture import fill_triangle
 #import IMMPoints, build_feature_vectors, \
 #    flatten_feature_vectors
 import pca
@@ -77,55 +77,47 @@ class ImageCanvas(Widget):
         self.image.source = self.filename_image
         self.canvas.ask_update()
 
-    def build_texture(self, mean_shape, r_shape, r_texture, triangles):
+    def build_texture(self, filename, Vt_texture, input_points, mean_value_points,
+                      mean_values_texture, triangles, n_texture_components):
         self.texture.clear()
+
         image_width, image_height = self.get_rendered_size()
-        bary_centric_range = np.linspace(0, 1, num=20)
+
+        InputPoints = imm.IMMPoints(filename=filename)
+        input_image = InputPoints.get_image()
+        buf = np.zeros(input_image.shape, dtype=np.uint8)
+
+        InputPoints.get_scaled_points((input_image.shape))
+        offset_x, offset_y, w, h = InputPoints.get_bounding_box()
+
+        MeanPoints = imm.IMMPoints(points_list=mean_value_points)
+
+        utils.reconstruct_texture(
+            input_image,  # src image
+            buf,          # dst image
+            Vt_texture,   # Vt
+            InputPoints,  # shape points input
+            MeanPoints,   # shape points mean
+            mean_values_texture,  # mean texture
+            triangles,    # triangles
+            n_texture_components  # learned n_texture_components
+        )
+
+        ratio_x = image_width / w
+        ratio_y = image_height / h
+
+        buf = cv2.resize(np.asarray(buf, np.uint8), (int(image_width), int(image_height)))
+        #buf = buf[offset_y: offset_y + h, offset_x: offset_x + w]
+
+        cv2.imshow('original', buf)
+        buf = b''.join(map(chr, buf.flatten()))
 
         texture = Texture.create(size=(image_width, image_height), colorfmt='bgr')
-        buf = np.zeros((image_width, image_height, 3), dtype=np.uint8)
+        texture.blit_buffer(buf, colorfmt='bgr', bufferfmt='ubyte')
+        self.texture.add(Rectangle(texture=texture, pos=(offset_x, offset_y), size=(w, h)))
 
-        offset = 0
-
-        for t, tri in enumerate(triangles):
-            points = r_shape[tri]
-
-            x = points[:, 0] * image_width + self.get_image_left(image_width)
-            y = (1.0 - points[:, 1]) * image_height + self.get_image_bottom(image_height)
-
-            src_p1_x, src_p2_x, src_p3_x = x
-            src_p1_y, src_p2_y, src_p3_y = y
-
-            for t, tri in enumerate(triangles):
-                offset += fill_triangle(
-                    r_texture, buf,
-                    src_p1_x, src_p1_y,
-                    src_p2_x, src_p2_y,
-                    src_p3_x, src_p3_y,
-                    dst_p1_x, dst_p1_y,
-                    dst_p2_x, dst_p2_y,
-                    dst_p3_x, dst_p3_y,
-                    offset,
-                    t
-                )
-
-                print offset
-
-            #p1 = [x[0], y[0]]
-            #p2 = [x[1], y[1]]
-            #p3 = [x[2], y[2]]
-
-
-        ##buf = b''.join(map(chr, buf))
-        #cv2.imshow('image', buf)
-        #cv2.waitKey(0)
-
-        #texture.blit_buffer(buf, colorfmt='bgr', bufferfmt='ubyte')
-        #self.texture.add(Rectangle(texture=texture, pos=(0, 100),
-        #                 size=(image_width, image_height)))
-
-        #self.canvas.add(self.texture)
-        #self.canvas.ask_update()
+        self.canvas.add(self.texture)
+        self.canvas.ask_update()
 
 
     def build_line_grid(self, r_shape, triangles):
@@ -178,24 +170,27 @@ class RootWidget(BoxLayout):
         super(RootWidget, self).__init__(**kwargs)
 
         self.files = kwargs['args'].files
-        self.mean_values_shape = kwargs['mean_values_shape']
+        self.mean_value_points = kwargs['mean_value_points']
         self.mean_values_texture = kwargs['mean_values_texture']
         self.eigenv_shape = kwargs['eigenv_shape']
         self.eigenv_texture = kwargs['eigenv_texture']
         self.triangles = kwargs['triangles']
         self.n_shape_components = kwargs['args'].n_components
         self.n_texture_components = kwargs['n_texture_components']
-        self.multipliers = np.ones(self.eigenv_shape.shape[1])
-        self.mean_values_shape_reshaped = np.copy(self.mean_values_shape).reshape((58, 2))
+        self.multipliers = np.ones(self.eigenv_shape.shape[0])
+        self.texture_multipliers = np.ones(self.eigenv_texture.shape[0])
 
         # slider index
         self.index = 0
         self.filename = ''
 
-        self.shape_list = aam.build_shape_feature_vectors(self.files, imm.get_imm_points, flattened=True)
+        self.shape_list = aam.build_shape_feature_vectors(
+            self.files, imm.get_imm_points, flattened=True
+        )
 
         # sliders
         self.add_shape_sliders()
+        self.add_texture_sliders()
         self.add_image_slider()
         self.add_components_slider()
         # ======= #
@@ -213,6 +208,15 @@ class RootWidget(BoxLayout):
         image_slider.max = len(self.files) - 1
         image_slider.bind(value=self.update_image)
 
+    def add_texture_sliders(self):
+        box_layout = self.ids['texture_eigenvalues']
+
+        for c in range(10):
+            slider = Slider(min=-10, max=10, value=0, id=str(c))
+            box_layout.add_widget(slider)
+            slider.bind(value=self.update_texture_eigenvalues)
+
+
     def add_shape_sliders(self):
         box_layout = self.ids['eigenvalues']
 
@@ -222,51 +226,43 @@ class RootWidget(BoxLayout):
             slider.bind(value=self.update_eigenvalues)
 
     def reset_sliders(self):
-        self.multipliers = np.ones(self.eigenv_shape.shape[1])
+        self.multipliers = np.ones(self.eigenv_shape.shape[0])
+        self.texture_multipliers = np.ones(self.texture_multipliers.shape[0])
+
         box_layout = self.ids['eigenvalues']
 
         for c in box_layout.children:
             c.value = 0
 
+        texture_eigenvalues = self.ids['texture_eigenvalues']
+
+        for c in texture_eigenvalues.children:
+            c.value = 0
+
     def update_image_viewer(self):
         self.filename = self.files[self.index].split('.')[0] + '.jpg'
         Vt_shape = np.dot(np.diag(self.multipliers), self.eigenv_shape)
-        # Vt_texture = np.dot(np.diag(self.multipliers), self.eigenv_texture)
+        Vt_texture = np.dot(np.diag(self.texture_multipliers), self.eigenv_texture)
+
+        input_points = self.shape_list[self.index]
 
         r_shape = pca.reconstruct(
-            self.shape_list[self.index], Vt_shape, self.mean_values_shape,
+            input_points, Vt_shape, self.mean_value_points,
             n_components=self.n_shape_components
         ).reshape((-1, 2))
-
-        #image = cv2.imread(self.filename)
-        #h, w = image.shape[0], image.shape[1]
-        #mean_values_shape = np.copy(self.mean_values_shape_reshaped)
-
-        #mean_values_shape[:, 0] = mean_values_shape[:, 0] * w
-        #mean_values_shape[:, 1] = mean_values_shape[:, 1] * h
-
-        #texture = aam.sample_from_triangles(
-        #    image, r_shape, mean_values_shape, self.triangles
-        #)
-
-        #r_texture = pca.reconstruct(
-        #    texture, self.eigenv_texture, self.mean_values_texture
-        #)
-
-        #r_texture = np.asarray(texture, np.uint8)
-
-        # pixels = aam.sample_from_triangles(image, r_shape, self.triangles)
-        # pixels = np.ndarray.flatten(pixels)
-
-        # r_texture = pca.reconstruct(
-        #     pixels, self.eigenv_texture, self.mean_values_texture,
-        #     n_components=50000).reshape((95, -1))
-        # self.ids['image_viewer'].build_texture(r_shape, r_texture, self.triangles)
 
         self.ids['image_viewer'].update_rect()
         self.ids['image_viewer'].update_image(self.filename)
         self.ids['image_viewer'].build_line_grid(r_shape, self.triangles)
-        #self.ids['image_viewer'].build_texture(r_shape, r_texture, self.triangles)
+        self.ids['image_viewer'].build_texture(
+                self.files[self.index],
+                self.eigenv_texture,
+                input_points,
+                self.mean_value_points,
+                self.mean_values_texture,
+                self.triangles,
+                self.n_texture_components
+        )
 
     def on_resize(self, *args):
         self.update_image_viewer()
@@ -278,6 +274,11 @@ class RootWidget(BoxLayout):
     def update_image(self, slider, index):
         self.index = int(index)
         self.reset_sliders()
+        self.update_image_viewer()
+
+    def update_texture_eigenvalues(self, slider, value):
+        multiplier_index = int(slider.id)
+        self.texture_multipliers[multiplier_index] = value
         self.update_image_viewer()
 
     def update_eigenvalues(self, slider, value):
@@ -301,7 +302,7 @@ class ReconstructApp(App):
             args=self.args,
             eigenv_shape=self.eigenv_shape,
             eigenv_texture=self.eigenv_texture,
-            mean_values_shape=self.mean_values_shape,
+            mean_value_points=self.mean_value_points,
             n_shape_components=self.n_shape_components,
             mean_values_texture=self.mean_values_texture,
             n_texture_components=self.n_texture_components,
