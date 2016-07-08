@@ -1,0 +1,8 @@
+<h1>Reconstruction</h1>
+
+<h3><button {{action "get_image"}}>{{title}}</button></h3>
+<h2>{{n_images}}</h2>
+
+{{#if image }}
+    <img src='data:image/jpg;base64,{{image}}' alt='missing image'>
+{{/if}}

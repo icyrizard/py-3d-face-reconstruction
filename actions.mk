@@ -62,3 +62,6 @@ test:
 
 test_modules:
 	python -m py.test -f src/*/*_test.py
+
+run:
+	python server.py

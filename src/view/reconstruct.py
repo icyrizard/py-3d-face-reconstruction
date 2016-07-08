@@ -28,6 +28,81 @@ import pca
 import aam
 
 
+class ReconstructCanvas(Widget):
+    def __init__(self, **kwargs):
+        super(ReconstructCanvas, self).__init__(**kwargs)
+        self.canvas.clear()
+
+        with self.canvas:
+            self.texture = InstructionGroup()
+
+    def build_texture(self, filename, Vt_texture, input_points, mean_value_points,
+                    mean_values_texture, triangles, n_texture_components):
+        self.texture.clear()
+        #image_width, image_height = self.get_rendered_size()
+        #InputPoints = imm.IMMPoints(filename=filename)
+        #input_image = InputPoints.get_image()
+
+        ##buf = np.zeros(input_image.shape, dtype=np.uint8)
+        ##buf = np.repeat(np.array([255, 0, 0]), input_image.shape[0] * input_image.shape[1])
+
+        buf = cv2.imread('data/test_data/red_500x500.png')
+        h, w, c = buf.shape
+
+        #InputPoints.get_scaled_points((input_image.shape))
+        #offset_x, offset_y, w, h = InputPoints.get_bounding_box()
+
+        #MeanPoints = imm.IMMPoints(points_list=mean_value_points)
+
+        #utils.reconstruct_texture(
+        #    input_image,  # src image
+        #    buf,          # dst image
+        #    Vt_texture,   # Vt
+        #    InputPoints,  # shape points input
+        #    MeanPoints,   # shape points mean
+        #    mean_values_texture,  # mean texture
+        #    triangles,    # triangles
+        #    n_texture_components  # learned n_texture_components
+        #)
+
+        #ratio_x = image_width / w
+        #ratio_y = image_height / h
+
+        #buf = cv2.resize(np.asarray(buf, np.uint8), (int(image_width), int(image_height)))
+        #buf = buf[offset_y: offset_y + h, offset_x: offset_x + w]
+        #size = 64 * 64 * 3
+        #buf = [int(x * 255 / size) for x in range(size)]
+        #print buf
+
+        #cv2.imshow('original', buf)
+        #buf = cv2.flip(buf, 0)
+        # buf = buf.tostring()
+        #buf = b''.join(map(chr, buf))
+
+        #texture = Texture.create(size=self.size, colorfmt='rgb')
+        #texture.blit_buffer(buf, colorfmt='rgb', bufferfmt='ubyte')
+
+        #pos_x = self.center[0] - self.size[0] / 2.0
+        #pos_y = self.center[1] - self.size[1] / 2.0
+
+        texture = Texture.create(size=(w, h), colorfmt="bgr")
+        #arr = np.ndarray(shape=[16, 16, 3], dtype=np.uint8)
+
+        # fill your numpy array here
+        data = buf.tostring()
+        texture.blit_buffer(data, bufferfmt="ubyte", colorfmt="bgr")
+
+        pos_x = self.center[0] - self.size[0] / 2.0
+        pos_y = self.center[1] - self.size[1] / 2.0
+
+        self.texture.add(
+            Rectangle(texture=texture, size=(w, h), pos=(pos_x, pos_y))
+        )
+
+        self.canvas.add(self.texture)
+        self.canvas.ask_update()
+
+
 class ImageCanvas(Widget):
     def __init__(self, **kwargs):
         super(ImageCanvas, self).__init__(**kwargs)
@@ -38,9 +113,7 @@ class ImageCanvas(Widget):
 
         with self.canvas:
             self.image = Image(pos=self.pos, size=self.size, source=self.filename_image)
-            self.mesh = Mesh(mode='triangle_fan')
             self.triangles = InstructionGroup()
-            self.texture = InstructionGroup()
             self.outline = InstructionGroup()
 
         self.bind(pos=self.update_rect, size=self.update_rect)
@@ -76,49 +149,6 @@ class ImageCanvas(Widget):
         self.filename_image = filename
         self.image.source = self.filename_image
         self.canvas.ask_update()
-
-    def build_texture(self, filename, Vt_texture, input_points, mean_value_points,
-                      mean_values_texture, triangles, n_texture_components):
-        self.texture.clear()
-
-        image_width, image_height = self.get_rendered_size()
-
-        InputPoints = imm.IMMPoints(filename=filename)
-        input_image = InputPoints.get_image()
-        buf = np.zeros(input_image.shape, dtype=np.uint8)
-
-        InputPoints.get_scaled_points((input_image.shape))
-        offset_x, offset_y, w, h = InputPoints.get_bounding_box()
-
-        MeanPoints = imm.IMMPoints(points_list=mean_value_points)
-
-        utils.reconstruct_texture(
-            input_image,  # src image
-            buf,          # dst image
-            Vt_texture,   # Vt
-            InputPoints,  # shape points input
-            MeanPoints,   # shape points mean
-            mean_values_texture,  # mean texture
-            triangles,    # triangles
-            n_texture_components  # learned n_texture_components
-        )
-
-        ratio_x = image_width / w
-        ratio_y = image_height / h
-
-        buf = cv2.resize(np.asarray(buf, np.uint8), (int(image_width), int(image_height)))
-        #buf = buf[offset_y: offset_y + h, offset_x: offset_x + w]
-
-        cv2.imshow('original', buf)
-        buf = b''.join(map(chr, buf.flatten()))
-
-        texture = Texture.create(size=(image_width, image_height), colorfmt='bgr')
-        texture.blit_buffer(buf, colorfmt='bgr', bufferfmt='ubyte')
-        self.texture.add(Rectangle(texture=texture, pos=(offset_x, offset_y), size=(w, h)))
-
-        self.canvas.add(self.texture)
-        self.canvas.ask_update()
-
 
     def build_line_grid(self, r_shape, triangles):
         self.triangles.clear()
@@ -254,7 +284,7 @@ class RootWidget(BoxLayout):
         self.ids['image_viewer'].update_rect()
         self.ids['image_viewer'].update_image(self.filename)
         self.ids['image_viewer'].build_line_grid(r_shape, self.triangles)
-        self.ids['image_viewer'].build_texture(
+        self.ids['reconstruct_viewer'].build_texture(
                 self.files[self.index],
                 self.eigenv_texture,
                 input_points,
