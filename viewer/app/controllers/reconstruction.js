@@ -7,7 +7,14 @@ export default Ember.Controller.extend({
     websockets: inject.service(),
     socketRef: null,
     image: null,
-    n_images: 0,
+    reconstructed: null,
+    n_images: null,
+    n_components: null,
+    image_index: 0,
+
+    imageIndexChanged: Ember.observer('image_index', function() { 
+        this.send('getImage');
+    }),
 
     init() {
         const socket = get(this, 'websockets').socketFor('ws://localhost:8888/reconstruction');
@@ -17,6 +24,15 @@ export default Ember.Controller.extend({
         socket.on('close', this.closeHandler, this);
 
         this.set('socketRef', socket);
+
+        this.get('store').findAll('face').
+                then(function(faces) {
+            var face = faces.objectAt(0);
+            this.send('getImage', face);
+        }, function(reason) {
+            console.log('fail');
+            console.log(reason);
+        });
     },
 
     willDestroyElement() {
@@ -31,18 +47,33 @@ export default Ember.Controller.extend({
     },
 
     openHandler(event) {
-        //var message = JSON.parse(event.data);
-        //this.set('n_images', message.n_images);
         console.log(event);
-        console.log(event.data.n_images);
         console.log(`On open event has been called: ${event}`);
     },
 
     messageHandler(event) {
-        //var message = JSON.parse(event.data);
-        //this.set('image', message.image);
+        var message = JSON.parse(event.data);
 
-        //console.log(`Message: ${'received image'}`);
+        if (message.n_images) {
+            this.set('n_images', message.n_images);
+        }
+
+        if (message.image) {
+            this.set('image', message.image);
+        }
+
+        if (message.reconstructed) {
+            this.set('reconstructed', message.reconstructed);
+        }
+
+        if (message.error) {
+            console.log(message.error);
+        }
+
+        //this.get('store').createRecord('face', {
+        //    filename: 'Derp',
+        //    shape: [1, 2, 3, 4, 5]
+        //});
     },
 
     closeHandler(event) {
@@ -50,11 +81,22 @@ export default Ember.Controller.extend({
     },
 
     actions: {
-        get_image() {
+        getImage(faceModel) {
+            var filename = faceModel.get('filename');
             const socket = this.get('socketRef');
+            console.log(socket);
+
             socket.send(
-                JSON.stringify({image_index: 1}
-            ));
+                JSON.stringify({filename: filename})
+            );
         },
+
+        getReconstruction() {
+            const socket = this.get('socketRef');
+
+            socket.send(
+                JSON.stringify({reconstruction_index: this.get('image_index')}
+            ));
+        }
     }
 });

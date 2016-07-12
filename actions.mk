@@ -63,5 +63,8 @@ test:
 test_modules:
 	python -m py.test -f src/*/*_test.py
 
-run:
-	python server.py
+server:
+	(cd src/; python -m tornado.autoreload server.py)
+
+ember:
+	(cd viewer; ember server);

@@ -7,6 +7,7 @@ module.exports = function(defaults) {
     // Add options here
   });
 
+  // bower compoenents
   app.import('bower_components/basscss/modules/align/index.css');
   app.import('bower_components/basscss/modules/border/index.css');
   app.import('bower_components/basscss/modules/flexbox/index.css');
@@ -18,6 +19,9 @@ module.exports = function(defaults) {
   app.import('bower_components/basscss/modules/position/index.css');
   app.import('bower_components/basscss/modules/type-scale/index.css');
   app.import('bower_components/basscss/modules/typography/index.css');
+
+  // npm modules
+  //app.import('node_modules/basscss-responsive-margin/css/responsive-margin.css');
 
   // Use `app.import` to add additional libraries to the generated
   // output files.
