@@ -21,6 +21,18 @@ class AAMPoints():
     these points transparent.
     """
     def __init__(self, normalized_flattened_points_list=None, points_list=None, actual_shape=()):
+        """
+        Args:
+            normalized_flattened_points_list(ndarray): flattened list of points.
+                This means that if the points consist of x,y coordinates, then all this
+                list will be: [x1, y1, x2, y2, ... xi, yi]
+            points_list(ndarray): this list is the same points but then not
+                flattened, [[x1, y1], [x2, y2], ... [xi, yi]]. You either create
+                this object with this argument or the normalized_flattened_points_list
+            actual_shape(tuple): this is important if you want to reconstruct
+                the original list, see get_scaled_points() for usage.
+
+        """
         self.normalized_flattened_points_list = normalized_flattened_points_list
         self.points_list = points_list
         self.actual_shape = actual_shape
@@ -29,6 +41,10 @@ class AAMPoints():
     def get_bounding_box(self):
         """
         Get the bounding box around the points.
+
+        Returns:
+            OpenCV rectangle:
+                x, y, w, h
         """
         if self.bounding_box is None:
             return self.calculate_bounding_box()

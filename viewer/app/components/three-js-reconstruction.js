@@ -2,8 +2,10 @@ import Ember from 'ember';
 import THREE from 'npm:three';
 import dat from 'npm:dat-gui';
 
-export default Ember.Component.extend({
+
+const ThreeComponent = Ember.Component.extend({
     store: Ember.inject.service(),
+    scene: null,
 
     willRender() {
         if (this.scene) {
@@ -25,6 +27,11 @@ export default Ember.Component.extend({
         this.set('camera', camera);
         this.set('renderer', renderer);
         this.set('gui', gui);
+
+        this.get('store').findAll('face').then((faces) => {
+            this.set('faces', faces);
+            this.addSliders();
+        });
     },
 
     /**
@@ -32,17 +39,15 @@ export default Ember.Component.extend({
      * the threejs container.
      * TODO: try to not use appendChild
      */
-    loadGui: Ember.on('didInsertElement', function() {
+    loadGui: Ember.computed('faces', function() {
         //var container = document.getElementById('threejs-container');
         //container.appendChild(this.get('renderer').domElement);
 
-        this.addSliders();
     }),
 
     addSliders() {
         var self = this;
         var gui = this.get('gui');
-
         var obj = {
             name: "Image filename",
             index: 0
@@ -53,13 +58,18 @@ export default Ember.Component.extend({
             components: 0
         };
 
-        var imagesSlider = gui.add(obj, "index").min(0).max(
-                this.n_images - 1).step(1);
+        var length = this.get('faces').get('length');
 
-        gui.add(components, "components").min(0).max(this.n_images - 1).step(1);
+        var imagesSlider = gui.add(obj, "index").min(0).max(
+                length - 1).step(1);
+
+        gui.add(components, "components").min(0).max(length - 1).step(1);
 
         imagesSlider.onChange(function(newValue) {
             self.set('image_index', newValue);
+            self.sendAction('update', newValue);
         });
     }
 });
+
+export default ThreeComponent;

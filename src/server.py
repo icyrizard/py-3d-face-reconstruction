@@ -1,14 +1,16 @@
 import json
+import os.path
 import base64
 from glob import glob
 
-from tornado import websocket, web, ioloop
+from tornado import websocket, web, ioloop, autoreload
 
 import imm_points as imm
 
 BASE = '../viewer/app'
 FILES_DIR = '../data/'
-FACE_DB = '{}{}'.format(FILES_DIR, 'imm_face_db')
+FACE_DB_NAME = 'imm_face_db'
+FACE_DB = '{}{}'.format(FILES_DIR, FACE_DB_NAME)
 
 
 class ImageWebSocketHandler(websocket.WebSocketHandler):
@@ -105,7 +107,7 @@ class FaceHandler(ApiHandler):
                 'type': 'faces',
                 'id': id,
                 'attributes': {
-                    'filename': filename,
+                    'filename': '{}/{}'.format(FACE_DB_NAME, os.path.basename(self.images[id])),
                     'shape': Points.get_scaled_points(shape=(480, 640)).tolist()
                 }
             })
@@ -120,9 +122,12 @@ class FaceHandler(ApiHandler):
 app = web.Application([
     (r'/reconstruction[\/0-9]?', ImageWebSocketHandler),
     (r'/api/v1/faces[\/0-9]?', FaceHandler),
+    (r'/data/(.*)', web.StaticFileHandler, {'path': '../data'}),
 ])
 
 
 if __name__ == '__main__':
     app.listen(8888)
-    ioloop.IOLoop.instance().start()
+    ioloop = ioloop.IOLoop.instance()
+    autoreload.start(ioloop)
+    ioloop.start()

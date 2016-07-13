@@ -1,29 +1,21 @@
 <h1>Reconstruction</h1>
 
-
 <div class="container">
     <div class="clearfix">
         <div class="col col-6">
-            {{#if image }}
-                <img src='data:image/jpg;base64,{{image}}' alt='missing image'>
-            {{/if}}
+            {{images-loader image_index=image_index}}
         </div>
+
         <div class="col col-6">
             {{#if reconstructed }}
-                <img src='data:image/jpg;base64,{{reconstructed}}' alt='missing image'>
+                <img src='data:image/jpg;base64,{{reconstructed}}'
+                    alt='missing image'>
             {{/if}}
         </div>
     </div>
 
     <div class="col col-12 px2">
-        {{#if n_images }}
-            {{
-                three-js-reconstruction
-                    n_images=n_images
-                    image_index=image_index
-                    n_components=n_components
-            }}
-        {{/if}}
+        {{three-js-reconstruction update=(action 'updateComponentConnector')}}
     </div>
 </div>
 
