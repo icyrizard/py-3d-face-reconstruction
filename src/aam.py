@@ -5,8 +5,8 @@ import cv2
 
 # local imports
 import pca
-import utils.texture as tx
-from utils import utils
+import reconstruction.texture as tx
+
 
 logging.basicConfig(
     level=logging.INFO,

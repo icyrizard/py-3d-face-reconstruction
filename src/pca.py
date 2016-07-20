@@ -1,6 +1,17 @@
 import numpy as np
 
 
+class PcaModel:
+    """Abstraction for a pca model"""
+    def __init__(self, model_file):
+        Vtm = np.load(model_file)
+        self.Vt = Vtm[0]
+        self.s = Vtm[1]
+        self.n_components = Vtm[2]
+        self.mean_values = Vtm[3][0]
+        self.triangles = Vtm[4]
+
+
 def pca(data, mean_values, variance_percentage=90):
     """
     Perform Singlar Value Decomposition
@@ -96,6 +107,11 @@ def load(filename):
     triangles = Vtm[4]
 
     return Vt, s, n_components, mean_values, triangles
+
+
+#def load_model(filename):
+#    # load the stored model file
+#    return PcaModel(filename)
 
 
 def flatten_feature_vectors(data, dim=0):

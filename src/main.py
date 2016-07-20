@@ -11,7 +11,7 @@ import pca
 import aam
 import imm_points as imm
 
-from utils import utils
+from reconstruction import reconstruction
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(name)s: %(message)s')
@@ -177,7 +177,7 @@ def show_pca_model(args):
     assert args.model_shape_file, '--model_texture_file needs to be provided to save the pca model'
     assert args.model_texture_file, '--model_texture_file needs to be provided to save the pca model'
 
-    from utils.triangles import draw_shape, get_texture
+    from reconstruction.triangles import draw_shape, get_texture
 
     Vt_shape, s, n_shape_components, mean_value_points, triangles = pca.load(args.model_shape_file)
     Vt_texture, s_texture, n_texture_components, mean_values_texture, _ = pca.load(args.model_texture_file)
@@ -211,30 +211,33 @@ def show_reconstruction(args):
     assert args.model_shape_file, '--model_texture_file needs to be provided to save the pca model'
     assert args.model_texture_file, '--model_texture_file needs to be provided to save the pca model'
 
-    Vt_shape, s, n_shape_components, mean_value_points, triangles = pca.load(args.model_shape_file)
-    Vt_texture, s_texture, n_texture_components, mean_values_texture, _ = pca.load(args.model_texture_file)
+   # Vt_shape, s, n_shape_components, mean_value_points, triangles = pca.load(args.model_shape_file)
+   # Vt_texture, s_texture, n_texture_components, mean_values_texture, _ = pca.load(args.model_texture_file)
+    shape_model = pca.PcaModel(args.model_shape_file)
+    texture_model = pca.PcaModel(args.model_texture_file)
 
-    InputPoints = imm.IMMPoints(filename='data/imm_face_db/40-3m.asf')
-    input_image = InputPoints.get_image()
+    input_points = imm.IMMPoints(filename='data/imm_face_db/40-3m.asf')
+    input_image = input_points.get_image()
 
-    MeanPoints = imm.IMMPoints(points_list=mean_value_points)
-    MeanPoints.get_scaled_points(input_image.shape)
+    mean_points = imm.IMMPoints(points_list=shape_model.mean_values)
+    mean_points.get_scaled_points(input_image.shape)
 
     while True:
-        utils.reconstruct_texture(
+        reconstruction.reconstruct_texture(
             input_image,  # src image
             input_image,  # dst image
-            Vt_texture,   # Vt
-            InputPoints,  # shape points input
-            MeanPoints,   # shape points mean
-            mean_values_texture,  # mean texture
-            triangles,  # triangles
-            n_texture_components  # learned n_texture_components
+            texture_model,
+            #Vt_texture,   # Vt
+            input_points,  # shape points input
+            mean_points,   # shape points mean
+            #mean_values_texture,  # mean texture
+            #triangles,  # triangles
+            #n_texture_components  # learned n_texture_components
         )
 
-        dst = utils.get_texture(MeanPoints, mean_values_texture)
+        dst = reconstruction.get_texture(mean_points, texture_model.mean_values)
 
-        cv2.imshow('original', InputPoints.get_image())
+        cv2.imshow('original', input_points.get_image())
         cv2.imshow('reconstructed', input_image)
         cv2.imshow('main face', dst)
 

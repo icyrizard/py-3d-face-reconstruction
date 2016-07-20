@@ -4,6 +4,7 @@ import base64
 from glob import glob
 
 from tornado import websocket, web, ioloop, autoreload
+from reconstruction import reconstruction
 
 import imm_points as imm
 
@@ -38,14 +39,6 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
 
     def open(self):
         print("WebSocket opened")
-        #self.write_message(
-        #    json.dumps({
-        #        'n_images': len(self.images),
-        #        'image': self.__get_base64_image(self.images[0])
-        #    }
-        #))
-
-        #self.write_message(json.dumps({'n_images': len(self.images)}))
 
     def __return_error(self, message):
         self.write_message(json.dumps(
@@ -53,15 +46,19 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
         ))
 
     def handle_return_reconstruction(self, message):
+        """ Return the reconstruction of the given image """
         image_index = message['reconstruction_index']
         filename = self.images[image_index]
+        input_points = self.asf[image_index]
+
         image = self.__get_base64_image(filename)
 
-        self.write_message(json.dumps({'reconstructed': image}))
+        reconstructed = reconstruction.reconstruct_texture(image)
+
+        self.write_message(json.dumps({'reconstructed': reconstructed}))
 
     def handle_return_image(self, message):
         filename = message['filename']
-        #filename = self.images[image_index]
         image = self.__get_base64_image(filename)
 
         self.write_message(json.dumps({'image': image}))

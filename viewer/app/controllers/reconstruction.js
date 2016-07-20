@@ -3,8 +3,9 @@ import Ember from 'ember';
 const { get, inject } = Ember;
 
 export default Ember.Controller.extend({
-    title: 'title',
     websockets: inject.service(),
+
+    title: 'title',
     faces: null,
     image: null,
 
@@ -34,10 +35,15 @@ export default Ember.Controller.extend({
         socket.off('open', this.openHandler);
         socket.off('message', this.messageHandler);
         socket.off('close', this.closeHandler);
+
+        console.log('Websockets: Removed all handlers');
     },
 
     openHandler(event) {
         console.log(`On open event has been called: ${event}`);
+
+        // get the reconstruction right after the socket opened
+        this.send('getReconstruction');
     },
 
     messageHandler(event) {
@@ -47,10 +53,6 @@ export default Ember.Controller.extend({
             this.set('n_images', message.n_images);
         }
 
-        //if (message.image) {
-        //    this.set('image', message.image);
-        //}
-
         if (message.reconstructed) {
             this.set('reconstructed', message.reconstructed);
         }
@@ -59,14 +61,11 @@ export default Ember.Controller.extend({
             console.log(message.error);
         }
 
-        //this.get('store').createRecord('face', {
-        //    filename: 'Derp',
-        //    shape: [1, 2, 3, 4, 5]
-        //});
+        this.set('loading', false);
     },
 
-    getReconstruction: Ember.computed('faces', function() {
-        console.log(this.get('faces'));
+    getReconstruction: Ember.observer('image_index', function() {
+        this.send('getReconstruction');
     }),
 
     closeHandler(event) {
@@ -75,6 +74,8 @@ export default Ember.Controller.extend({
 
     actions: {
         getImage(faceModel) {
+            this.set('loading', true);
+
             var filename = faceModel.get('filename');
             const socket = this.get('socketRef');
 
@@ -84,6 +85,8 @@ export default Ember.Controller.extend({
         },
 
         getReconstruction() {
+            this.set('loading', true);
+
             const socket = this.get('socketRef');
 
             socket.send(

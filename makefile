@@ -5,16 +5,16 @@ SITE_PACKAGES := $(VIRTUALENV)/lib/$(PYTHON)/site-packages
 
 OPENCV:= $(SITE_PACKAGES)/cv.py $(SITE_PACKAGES)/cv2.so
 
-TARGETS:= $(OPENCV) $(VIRTUALENV) data utils
+TARGETS:= $(OPENCV) $(VIRTUALENV) data reconstruction
 all: $(TARGETS)
 
 include actions.mk
 
 data: data/imm_face_db
-utils: texture.so
+reconstruction: texture.so
 
-texture.so: src/utils/texture.pyx
-	(cd src/utils; python setup.py build_ext --inplace)
+texture.so: src/reconstruction/texture.pyx
+	(cd src/reconstruction; python setup.py build_ext --inplace)
 
 
 build: requirements.txt

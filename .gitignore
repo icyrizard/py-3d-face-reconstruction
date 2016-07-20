@@ -1,7 +1,7 @@
 data/*
 src/.cache/*
 src/*/.cache
-src/utils/*.c
-src/utils/*.o
-src/utils/*.so
-src/utils/build/
+src/reconstruction/*.c
+*.o
+*.so
+src/reconstruction/build/

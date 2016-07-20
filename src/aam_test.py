@@ -6,7 +6,8 @@ import aam
 import pca
 import imm_points as imm
 
-from utils import triangles as tri
+from reconstruction import triangles as tri
+
 
 def test_build_mean_aan():
     imm_points = np.array([
