@@ -49,6 +49,22 @@ show_reconstruction:
 		--model_shape_file data/pca_shape_model.npy \
 		--n_components 6
 
+profile_reconstruction:
+	python -m cProfile src/main.py \
+		--reconstruct \
+		--files data/imm_face_db/*.asf \
+		--model_texture_file data/pca_texture_model.npy \
+		--model_shape_file data/pca_shape_model.npy \
+		--n_components 6
+
+graph_reconstruction:
+	python ./src/main.py \
+		--generate_call_graph \
+		--files data/imm_face_db/*.asf \
+		--model_texture_file data/pca_texture_model.npy \
+		--model_shape_file data/pca_shape_model.npy \
+		--n_components 6
+
 show_kivy:
 	python src/main.py \
 		--show_kivy \
@@ -68,3 +84,6 @@ server:
 
 ember:
 	(cd viewer; ember server);
+
+ctags:
+	ctags -R --python-kinds=-i src

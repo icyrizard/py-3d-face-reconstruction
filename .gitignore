@@ -5,3 +5,5 @@ src/reconstruction/*.c
 *.o
 *.so
 src/reconstruction/build/
+*.dSYM
+vendor/*

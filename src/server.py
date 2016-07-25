@@ -1,12 +1,15 @@
 import json
 import os.path
 import base64
+from cStringIO import StringIO
 from glob import glob
 
+import cv2
 from tornado import websocket, web, ioloop, autoreload
-from reconstruction import reconstruction
 
+import pca
 import imm_points as imm
+from reconstruction import reconstruction
 
 BASE = '../viewer/app'
 FILES_DIR = '../data/'
@@ -23,6 +26,13 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
     def __init__(self, *args, **kwargs):
         self.images = glob('{}/*.jpg'.format(FACE_DB))
         self.asf = glob('{}/*.asf'.format(FACE_DB))
+
+        # todo get from settings
+        model_texture_file = '{}/pca_texture_model.npy'.format(FILES_DIR)
+        model_shape_file = '{}/pca_shape_model.npy'.format(FILES_DIR)
+
+        self.shape_model = pca.PcaModel(model_shape_file)
+        self.texture_model = pca.PcaModel(model_texture_file)
 
         websocket.WebSocketHandler.__init__(self, *args, **kwargs)
 
@@ -48,12 +58,25 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
     def handle_return_reconstruction(self, message):
         """ Return the reconstruction of the given image """
         image_index = message['reconstruction_index']
-        filename = self.images[image_index]
-        input_points = self.asf[image_index]
+        asf_filename = self.asf[image_index]
 
-        image = self.__get_base64_image(filename)
+        input_points = imm.IMMPoints(filename=asf_filename)
+        input_image = input_points.get_image()
 
-        reconstructed = reconstruction.reconstruct_texture(image)
+        mean_points = imm.IMMPoints(points_list=self.shape_model.mean_values)
+        mean_points.get_scaled_points(input_image.shape)
+
+        #TODO This one is VERY SLOW, try to optimize
+        reconstruction.reconstruct_texture(
+            input_image,  # src image
+            input_image,  # dst image
+            self.texture_model,
+            input_points,  # shape points input
+            mean_points,   # shape points mean
+        )
+
+        _, reconstructed = cv2.imencode('.jpg', input_image)
+        reconstructed = base64.b64encode(reconstructed)
 
         self.write_message(json.dumps({'reconstructed': reconstructed}))
 

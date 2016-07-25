@@ -1,3 +1,4 @@
+#!/usr/local/bin/python
 # python std
 import argparse
 import logging
@@ -11,6 +12,7 @@ import pca
 import aam
 import imm_points as imm
 
+import halide
 from reconstruction import reconstruction
 
 logging.basicConfig(level=logging.INFO,
@@ -30,6 +32,11 @@ def add_parser_options():
     pca_group.add_argument(
         '--show_kivy', action='store_true',
         help='Reconstruct using kivy as a GUI'
+    )
+
+    pca_group.add_argument(
+        '--generate_call_graph', action='store_true',
+        help='Generate call graph from the reconstruction'
     )
 
     pca_group.add_argument(
@@ -207,6 +214,34 @@ def show_pca_model(args):
     cv2.destroyAllWindows()
 
 
+def generate_call_graph(args):
+    assert args.model_shape_file, '--model_texture_file needs to be provided to save the pca model'
+    assert args.model_texture_file, '--model_texture_file needs to be provided to save the pca model'
+
+    from pycallgraph import PyCallGraph
+    from pycallgraph.output import GraphvizOutput
+
+    graphviz = GraphvizOutput(output_file='filter_none.png')
+
+    with PyCallGraph(output=graphviz):
+        shape_model = pca.PcaModel(args.model_shape_file)
+        texture_model = pca.PcaModel(args.model_texture_file)
+
+        input_points = imm.IMMPoints(filename='data/imm_face_db/40-3m.asf')
+        input_image = input_points.get_image()
+
+        mean_points = imm.IMMPoints(points_list=shape_model.mean_values)
+        mean_points.get_scaled_points(input_image.shape)
+
+        reconstruction.reconstruct_texture(
+            input_image,  # src image
+            input_image,  # dst image
+            texture_model,
+            input_points,  # shape points input
+            mean_points,   # shape points mean
+        )
+
+
 def show_reconstruction(args):
     assert args.model_shape_file, '--model_texture_file needs to be provided to save the pca model'
     assert args.model_texture_file, '--model_texture_file needs to be provided to save the pca model'
@@ -227,15 +262,13 @@ def show_reconstruction(args):
             input_image,  # src image
             input_image,  # dst image
             texture_model,
-            #Vt_texture,   # Vt
             input_points,  # shape points input
             mean_points,   # shape points mean
-            #mean_values_texture,  # mean texture
-            #triangles,  # triangles
-            #n_texture_components  # learned n_texture_components
         )
 
-        dst = reconstruction.get_texture(mean_points, texture_model.mean_values)
+        dst = reconstruction.get_texture(
+                mean_points, texture_model.mean_values
+            )
 
         cv2.imshow('original', input_points.get_image())
         cv2.imshow('reconstructed', input_image)
@@ -247,7 +280,6 @@ def show_reconstruction(args):
             break
 
     cv2.destroyAllWindows()
-
 
 
 def main():
@@ -266,6 +298,8 @@ def main():
         show_reconstruction(args)
     elif args.show_kivy:
         reconstruct_with_model(args)
+    elif args.generate_call_graph:
+        generate_call_graph(args)
 
 if __name__ == '__main__':
     main()

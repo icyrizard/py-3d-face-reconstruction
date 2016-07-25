@@ -9,13 +9,12 @@ TARGETS:= $(OPENCV) $(VIRTUALENV) data reconstruction
 all: $(TARGETS)
 
 include actions.mk
+include src/reconstruction/build.mk
 
 data: data/imm_face_db
-reconstruction: texture.so
+reconstruction: texture.so halide src/reconstruction/texture_halide
 
-texture.so: src/reconstruction/texture.pyx
-	(cd src/reconstruction; python setup.py build_ext --inplace)
-
+OS := $(shell uname)
 
 build: requirements.txt
 	@(source $(VIRTUALENV)/bin/activate; \
