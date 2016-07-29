@@ -12,7 +12,7 @@ include actions.mk
 include src/reconstruction/build.mk
 
 data: data/imm_face_db
-reconstruction: texture.so halide src/reconstruction/texture_halide
+reconstruction: texture.so src/reconstruction/texture_halide
 
 OS := $(shell uname)
 
