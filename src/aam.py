@@ -195,6 +195,10 @@ def build_texture_feature_vectors(files, get_image_with_points, MeanPoints, tria
         list: list of feature vectors
     """
     mean_texture = []
+
+    image, points = get_image_with_points(files[0])
+    MeanPoints.get_scaled_points(image.shape)
+
     x, y, w_slice, h_slice = MeanPoints.get_bounding_box()
 
     for i, f in enumerate(files):
@@ -211,7 +215,7 @@ def build_texture_feature_vectors(files, get_image_with_points, MeanPoints, tria
         sample_from_triangles(
             image,
             Points.get_scaled_points(image.shape),
-            MeanPoints(image.shape),
+            MeanPoints.get_scaled_points(image.shape),
             triangles,
             dst
         )
