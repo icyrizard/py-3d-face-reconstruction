@@ -96,21 +96,32 @@ def save_pca_model_texture(args):
     assert args.model_shape_file, '--model_texture_file needs to be provided to save the pca model'
     assert args.model_texture_file, '--model_texture_file needs to be provided to save the pca model'
 
-    Vt, s, n_components, mean_shape, triangles = pca.load(args.model_shape_file)
+    shape_model = pca.PcaModel(args.model_shape_file)
 
-    MeanPoints = aam.AAMPoints(
-        normalized_flattened_points_list=mean_value_points,
-        actual_shape=(58, 2)
-    )
+    mean_points = imm.IMMPoints(points_list=shape_model.mean_values)
+
+    #reconstruction.reconstruct_texture(
+    #    input_image,  # src image
+    #    input_image,  # dst image
+    #    texture_model,
+    #    input_points,  # shape points input
+    #    mean_points,   # shape points mean
+    #)
+
+    # old
+    #Vt, s, n_components, mean_shape, triangles = pca.load(args.model_shape_file)
 
     textures = aam.build_texture_feature_vectors(
-        args.files, imm.get_imm_image_with_landmarks, MeanPoints, triangles
+        args.files,
+        imm.get_imm_image_with_landmarks,
+        mean_points,
+        shape_model.triangles
     )
 
     mean_texture = aam.get_mean(textures)
     _, s, Vt, n_components = pca.pca(textures, mean_texture)
 
-    pca.save(Vt, s, n_components, mean_texture, triangles, args.model_texture_file)
+    pca.save(Vt, s, n_components, mean_texture, shape_model.triangles, args.model_texture_file)
 
     logger.info('texture pca model saved in %s', args.model_texture_file)
 
