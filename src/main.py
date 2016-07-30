@@ -12,7 +12,6 @@ import pca
 import aam
 import imm_points as imm
 
-import halide
 from reconstruction import reconstruction
 
 logging.basicConfig(level=logging.INFO,

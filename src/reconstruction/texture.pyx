@@ -79,22 +79,12 @@ cdef inline cartesian2barycentric(
 
     """
     lambdas[0] = ((y_2 - y_3) * (x - x_3) + (x_3 - x_2) * (y - y_3)) / \
-                            ((y_2 - y_3) * (x_1 - x_3) + (x_3 - x_2) * (y_1 - y_3))
+                ((y_2 - y_3) * (x_1 - x_3) + (x_3 - x_2) * (y_1 - y_3))
 
     lambdas[1] = ((y_3 - y_1) * (x - x_3) + (x_1 - x_3) * (y - y_3)) / \
-                            ((y_2 - y_3) * (x_1 - x_3) + (x_3 - x_2) * (y_1 - y_3))
+                ((y_2 - y_3) * (x_1 - x_3) + (x_3 - x_2) * (y_1 - y_3))
 
-    #cdef float lambda_3 = 1 - lambda_1 - lambda_2
-
-    #a = np.array([
-    #    [r1_x, r2_x, r3_x],
-    #    [r1_y, r2_y, r3_y],
-    #    [1, 1, 1]
-    #])
-
-    #b = np.array([r_x, r_y, 1])
-
-    #return np.linalg.solve(a, b)
+    lambdas[2] = 1 - lambdas[0] - lambdas[1]
 
 
 cdef inline np.ndarray[double, ndim=1] cartesian2barycentric_slow(
@@ -119,19 +109,28 @@ cdef inline np.ndarray[double, ndim=1] cartesian2barycentric_slow(
     return np.linalg.solve(a, b)
 
 
+#cdef inline np.ndarray[double, ndim=2] barycentric2cartesian(
+#            int x1, int x2, int x3, int y1, int y2, int y3,
+#            np.ndarray[long, ndim=2] matrix,
+#            np.ndarray[float, ndim=2] Lambdas):
+#    matrix[0][0] = x1
+#    matrix[0][1] = x2
+#    matrix[0][2] = x3
+#
+#    matrix[1][0] = y1
+#    matrix[1][1] = y2
+#    matrix[1][2] = y3
+#
+#    return np.dot(matrix, Lambdas)
+
 cdef inline np.ndarray[double, ndim=2] barycentric2cartesian(
             int x1, int x2, int x3, int y1, int y2, int y3,
-            np.ndarray[long, ndim=2] matrix,
-            np.ndarray[float, ndim=2] Lambdas):
-    matrix[0][0] = x1
-    matrix[0][1] = x2
-    matrix[0][2] = x3
+            float[:] lambdas, float[:] output):
+    # cartesian x
+    output[0] = x1 * lambdas[0] + x2 * lambdas[1] + x3 * lambdas[2]
 
-    matrix[1][0] = y1
-    matrix[1][1] = y2
-    matrix[1][2] = y3
-
-    return np.dot(matrix, Lambdas)
+    # cartesian y
+    output[1] = y1 * lambdas[0] + y2 * lambdas[1] + y3 * lambdas[2]
 
 
 @cython.boundscheck(False)
@@ -150,16 +149,11 @@ def fill_triangle(np.ndarray[unsigned char, ndim=3] src,
     cdef int y_min = min(y1, min(y2, y3))
     cdef int y_max = max(y1, max(y2, y3))
 
-    cdef np.ndarray L = np.zeros([3, 1], dtype=DTYPE_float32)
-    cdef np.ndarray matrix = np.full([3, 3], fill_value=1, dtype=DTYPE_int)
-
-    cdef np.ndarray src_loc = np.zeros([3, 1], dtype=DTYPE_float64)
-
     cdef int w = x_max - x_min
     cdef int h = y_max - y_min
     cdef int new_offset
 
-    cdef c_array.array dst_loc = c_array.array('f', [0., 0.])
+    cdef c_array.array dst_loc = c_array.array('f', [0., 0., 0.])
 
     for j, y in enumerate(xrange(y_min, y_max)):
         for i, x in enumerate(xrange(x_min, x_max)):
@@ -170,59 +164,10 @@ def fill_triangle(np.ndarray[unsigned char, ndim=3] src,
             s = dst_loc[0]
             t = dst_loc[1]
 
-            # notice we have a soft margin of -0.00001, which makes sure there are no
-            # gaps due to rounding issues
-            if s >= -0.01 and t >= -0.01 and s + t <= 1.0:
+            # In or out the triangle (with a soft margin)
+            if s >= -0.01 and t >= -0.01 and s + t <= 1.001:
                 dst[y, x, :] = src[y, x, :]
 
-
-#@cython.boundscheck(False)
-#@cython.wraparound(False)
-#def fill_triangle_src_dst(np.ndarray[unsigned char, ndim=3] src,
-#                          np.ndarray[unsigned char, ndim=3] dst,
-#                          int src_x1, int src_y1, int src_x2, int src_y2,
-#                          int src_x3, int src_y3,
-#                          int dst_x1, int dst_y1, int dst_x2, int dst_y2,
-#                          int dst_x3, int dst_y3,
-#                          int offset_x, int offset_y):
-#
-#    cdef np.ndarray triangle_x = np.array([dst_x1, dst_x2, dst_x3])
-#    cdef np.ndarray triangle_y = np.array([dst_y1, dst_y2, dst_y3])
-#
-#    cdef int x_min = np.argmin(triangle_x)
-#    cdef int x_max = np.argmax(triangle_x)
-#    cdef int y_min = np.argmin(triangle_y)
-#    cdef int y_max = np.argmax(triangle_y)
-#
-#    cdef np.ndarray L = np.zeros([3, 1], dtype=DTYPE_float32)
-#    cdef np.ndarray matrix = np.full([3, 3], fill_value=1, dtype=DTYPE_int)
-#
-#    cdef np.ndarray src_loc = np.zeros([3, 1], dtype=DTYPE_float64)
-#    cdef c_array.array dst_loc = c_array.array('f', [0., 0.])
-#
-#    for j, y in enumerate(xrange(triangle_y[y_min], triangle_y[y_max])):
-#        for i, x in enumerate(xrange(triangle_x[x_min], triangle_x[x_max])):
-#            cartesian2barycentric(
-#                dst_x1, dst_y1, dst_x2, dst_y2, dst_x3, dst_y3, x, y, dst_loc
-#            )
-#
-#            s = dst_loc[0]
-#            t = dst_loc[1]
-#
-#            if s >= -0.001 and t >= -0.001 and s + t <= 1.001:
-#                L[0] = s
-#                L[1] = t
-#                L[2] = 1 - s - t
-#
-#                src_loc = barycentric2cartesian(
-#                    src_x1, src_x2, src_x3,
-#                    src_y1, src_y2, src_y3,
-#                    matrix,
-#                    L
-#                )
-#
-#                dst[y, x, :] = src[src_loc[1][0], src_loc[0][0], :]
-#
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -236,6 +181,11 @@ def fill_triangle_src_dst(np.ndarray[unsigned char, ndim=3] src,
     Fill a triangle by applying the Barycentric Algorithm for deciding if a
     point lies inside or outside a triangle.
     """
+
+    cdef c_array.array dst_loc = c_array.array('f', [0., 0., 0.])
+    cdef c_array.array src_loc = c_array.array('f', [0., 0., 0.])
+
+    # get bounding box of the triangle
     cdef np.ndarray triangle_x = np.array([dst_x1, dst_x2, dst_x3])
     cdef np.ndarray triangle_y = np.array([dst_y1, dst_y2, dst_y3])
 
@@ -243,15 +193,12 @@ def fill_triangle_src_dst(np.ndarray[unsigned char, ndim=3] src,
     cdef int x_max = np.argmax(triangle_x)
     cdef int y_min = np.argmin(triangle_y)
     cdef int y_max = np.argmax(triangle_y)
+    ###
 
-    cdef np.ndarray L = np.zeros([3, 1], dtype=DTYPE_float32)
-    cdef np.ndarray matrix = np.full([3, 3], fill_value=1, dtype=DTYPE_int)
-
-    cdef np.ndarray src_loc = np.zeros([3, 1], dtype=DTYPE_float64)
-    cdef c_array.array dst_loc = c_array.array('f', [0., 0.])
-
-    for j, y in enumerate(xrange(triangle_y[y_min], triangle_y[y_max])):
-        for i, x in enumerate(xrange(triangle_x[x_min], triangle_x[x_max])):
+    # walk over x and y values of this bounding box see if the
+    # pixel is in or out the boudning box
+    for y in xrange(triangle_y[y_min], triangle_y[y_max]):
+        for x in xrange(triangle_x[x_min], triangle_x[x_max]):
             cartesian2barycentric(
                 triangle_x[0], triangle_y[0],
                 triangle_x[1], triangle_y[1],
@@ -262,16 +209,12 @@ def fill_triangle_src_dst(np.ndarray[unsigned char, ndim=3] src,
             s = dst_loc[0]
             t = dst_loc[1]
 
+            # In or out the triangle (with a soft margin)
             if s >= -0.01 and t >= -0.01 and s + t <= 1.001:
-                L[0] = s
-                L[1] = t
-                L[2] = 1 - s - t
-
-                src_loc = barycentric2cartesian(
+                barycentric2cartesian(
                     src_x1, src_x2, src_x3,
                     src_y1, src_y2, src_y3,
-                    matrix,
-                    L
+                    dst_loc, src_loc
                 )
 
-                dst[y, x, :] = src[src_loc[1][0], src_loc[0][0], :]
+                dst[y, x, :] = src[src_loc[1], src_loc[0], :]
