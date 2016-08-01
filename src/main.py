@@ -97,19 +97,7 @@ def save_pca_model_texture(args):
     assert args.model_texture_file, '--model_texture_file needs to be provided to save the pca model'
 
     shape_model = pca.PcaModel(args.model_shape_file)
-
     mean_points = imm.IMMPoints(points_list=shape_model.mean_values)
-
-    #reconstruction.reconstruct_texture(
-    #    input_image,  # src image
-    #    input_image,  # dst image
-    #    texture_model,
-    #    input_points,  # shape points input
-    #    mean_points,   # shape points mean
-    #)
-
-    # old
-    #Vt, s, n_components, mean_shape, triangles = pca.load(args.model_shape_file)
 
     textures = aam.build_texture_feature_vectors(
         args.files,

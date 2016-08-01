@@ -183,13 +183,13 @@ def sample_from_triangles(src, points2d_src, points2d_dst, triangles, dst):
         )
 
 
-def build_texture_feature_vectors(files, get_image_with_points, MeanPoints, triangles):
+def build_texture_feature_vectors(files, get_image_with_points, mean_points, triangles):
     """
     Args:
         files (list): list files
         flattened (bool): Flatten the inner feature vectors, see
             flatten_feature_vectors.
-        MeanPoints(AAMPoints): AAMPoints object
+        mean_points(AAMPoints): AAMPoints object
 
     Returns:
         list: list of feature vectors
@@ -197,9 +197,9 @@ def build_texture_feature_vectors(files, get_image_with_points, MeanPoints, tria
     mean_texture = []
 
     image, points = get_image_with_points(files[0])
-    MeanPoints.get_scaled_points(image.shape)
+    mean_points.get_scaled_points(image.shape)
 
-    x, y, w_slice, h_slice = MeanPoints.get_bounding_box()
+    x, y, w_slice, h_slice = mean_points.get_bounding_box()
 
     for i, f in enumerate(files):
         image, points = get_image_with_points(f)
@@ -215,7 +215,7 @@ def build_texture_feature_vectors(files, get_image_with_points, MeanPoints, tria
         sample_from_triangles(
             image,
             Points.get_scaled_points(image.shape),
-            MeanPoints.get_scaled_points(image.shape),
+            mean_points.get_scaled_points(image.shape),
             triangles,
             dst
         )
