@@ -8,7 +8,7 @@ import cv2
 from tornado import websocket, web, ioloop, autoreload
 
 import pca
-import imm_points as imm
+from datasets import imm
 from reconstruction import reconstruction
 
 BASE = '../viewer/app'
@@ -128,7 +128,7 @@ class FaceHandler(ApiHandler):
                 'id': id,
                 'attributes': {
                     'filename': '{}/{}'.format(FACE_DB_NAME, os.path.basename(self.images[id])),
-                    'shape': Points.get_scaled_points(shape=(480, 640)).tolist()
+                    'shape': Points.get_scaled_points((480, 640)).tolist()
                 }
             })
 

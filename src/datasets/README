@@ -1,0 +1,7 @@
+This contains all code specific to reading datasets. The imm dataset is
+different from the I-BUG data format. To able to implement transparency between
+datasets, we keep all specific code in this seperate module and immplement
+specific code to read-in this data here.
+
+More about the implementation details should be defined here, so more about
+this later.

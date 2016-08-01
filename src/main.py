@@ -10,7 +10,7 @@ import cv2
 # local imports
 import pca
 import aam
-import imm
+# import imm
 
 from reconstruction import reconstruction
 
@@ -102,6 +102,9 @@ def save_pca_model_texture(args):
     assert args.model_texture_file, '--model_texture_file needs to be provided to save the pca model'
 
     shape_model = pca.PcaModel(args.model_shape_file)
+
+    from datasets import imm
+
     mean_points = imm.IMMPoints(points_list=shape_model.mean_values)
 
     textures = aam.build_texture_feature_vectors(
@@ -138,6 +141,7 @@ def save_pca_model_shape(args):
     """
     assert args.files, '--files should be given'
     assert args.model_shape_file, '--model_shape_file needs to be provided to save the pca model'
+    from datasets import imm
 
     points = aam.build_shape_feature_vectors(
         args.files, imm.get_imm_points, flattened=True
@@ -253,6 +257,7 @@ def show_reconstruction(args):
 
    # Vt_shape, s, n_shape_components, mean_value_points, triangles = pca.load(args.model_shape_file)
    # Vt_texture, s_texture, n_texture_components, mean_values_texture, _ = pca.load(args.model_texture_file)
+    from datasets import imm
     shape_model = pca.PcaModel(args.model_shape_file)
     texture_model = pca.PcaModel(args.model_texture_file)
 
