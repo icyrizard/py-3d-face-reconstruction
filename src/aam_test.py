@@ -4,7 +4,7 @@ import pytest
 
 import aam
 import pca
-import imm_points as imm
+import imm
 
 from reconstruction import triangles as tri
 

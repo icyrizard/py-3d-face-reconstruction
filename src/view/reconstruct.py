@@ -19,7 +19,7 @@ from kivy.graphics.context_instructions import Color
 from functools import partial
 from math import cos, sin, pi
 
-import imm_points as imm
+import imm
 from utils import utils
 from utils.texture import fill_triangle
 #import IMMPoints, build_feature_vectors, \

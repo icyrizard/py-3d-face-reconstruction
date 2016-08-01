@@ -10,7 +10,7 @@ import cv2
 # local imports
 import pca
 import aam
-import imm_points as imm
+import imm
 
 from reconstruction import reconstruction
 
@@ -65,6 +65,11 @@ def add_parser_options():
     pca_group.add_argument(
         '--model_shape_file', type=str,
         help='pca model file that contains or is going to contain the pca shape model'
+    )
+
+    pca_group.add_argument(
+        '--shape_type', type=str, choices=['imm'],
+        help='type of shape, annotated dataset'
     )
 
     pca_group.add_argument(
@@ -135,7 +140,8 @@ def save_pca_model_shape(args):
     assert args.model_shape_file, '--model_shape_file needs to be provided to save the pca model'
 
     points = aam.build_shape_feature_vectors(
-        args.files, imm.get_imm_points, flattened=True)
+        args.files, imm.get_imm_points, flattened=True
+    )
 
     mean_values = aam.get_mean(points)
 
@@ -213,6 +219,7 @@ def show_pca_model(args):
 
 
 def generate_call_graph(args):
+    """Performance debug function, will be (re)moved later. """
     assert args.model_shape_file, '--model_texture_file needs to be provided to save the pca model'
     assert args.model_texture_file, '--model_texture_file needs to be provided to save the pca model'
 

@@ -51,7 +51,7 @@ class AAMPoints():
 
         return self.bounding_box
 
-    def get_scaled_points(self, shape, rescale=False):
+    def get_scaled_points(self, width_height_dimensions, rescale=False):
         """
         Scale the normalized flattened points list to a scale given by 'shape'.
         The x and y values should be scaled to the width and height of the image.
@@ -66,11 +66,14 @@ class AAMPoints():
         if self.points_list is None or rescale:
             self.points_list = self.normalized_flattened_points_list
 
+            # shape into [[x, y(, z)], [x, y, (,z)]]
+            # we use the 'actual_shape' which is known from the creation of
+            # this object.
             if len(self.actual_shape):
                 self.points_list = self.points_list.reshape(self.actual_shape)
 
-            h = shape[0]
-            w = shape[1]
+            h = width_height_dimensions[0]
+            w = width_height_dimensions[1]
 
             self.points_list[:, 0] = self.points_list[:, 0] * w
             self.points_list[:, 1] = self.points_list[:, 1] * h
@@ -88,11 +91,13 @@ class AAMPoints():
         width)
         """
         assert self.points_list is not None, \
-            'the list points already need to be scaled order to correctly work'
+            'the list points already need to be scaled order to correctly work,\
+            this requires that get_scaled_points is executed first.'
 
         hull = cv2.convexHull(self.points_list, returnPoints=True)
         return cv2.boundingRect(hull)
 
+    # TODO: impove by not using opencv but just min-max of the lists
     def get_bounding_box_2(self):
         pass
         #hull = cv2.convexHull(self.points_list, returnPoints=True)
@@ -103,7 +108,7 @@ class AAMPoints():
 def get_mean(vector):
     """ construct a mean from a matrix of x,y values
     Args:
-        imm_points(numpy array) that follows the following structure:
+        points(numpy array) that follows the following structure:
 
     Returns:
         mean_values (numpy array)
@@ -187,8 +192,8 @@ def build_texture_feature_vectors(files, get_image_with_points, mean_points, tri
     """
     Args:
         files (list): list files
-        flattened (bool): Flatten the inner feature vectors, see
-            flatten_feature_vectors.
+        get_image_with_points (function): That can return the image together
+            with the location.
         mean_points(AAMPoints): AAMPoints object
 
     Returns:
@@ -197,8 +202,7 @@ def build_texture_feature_vectors(files, get_image_with_points, mean_points, tri
     mean_texture = []
 
     image, points = get_image_with_points(files[0])
-    mean_points.get_scaled_points(image.shape)
-
+    mean_points.get_scaled_points(image.shape) # improve this, see issue #1
     x, y, w_slice, h_slice = mean_points.get_bounding_box()
 
     for i, f in enumerate(files):
