@@ -1,7 +1,6 @@
 #!/usr/local/bin/python
 # python std
 import argparse
-import logging
 import importlib
 
 # installed packages
@@ -14,9 +13,7 @@ import aam
 
 from reconstruction import reconstruction
 
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s %(levelname)s %(name)s: %(message)s')
-logger = logging.getLogger(__name__)
+from settings import logger
 
 
 def add_parser_options():
@@ -104,7 +101,7 @@ def save_pca_model_texture(args):
     assert args.shape_type, '--shape_type the type of dataset, see datasets module'
 
     dataset_module = import_dataset_module(args.shape_type)
-    shape_model = pca.PcaModel(args.model_shape_file)
+    shape_model = pca.PCAModel(args.model_shape_file)
     mean_points = dataset_module.IMMPoints(points_list=shape_model.mean_values)
 
     textures = aam.build_texture_feature_vectors(
@@ -174,8 +171,8 @@ def generate_call_graph(args):
     graphviz = GraphvizOutput(output_file='filter_none.png')
 
     with PyCallGraph(output=graphviz):
-        shape_model = pca.PcaModel(args.model_shape_file)
-        texture_model = pca.PcaModel(args.model_texture_file)
+        shape_model = pca.PCAModel(args.model_shape_file)
+        texture_model = pca.PCAModel(args.model_texture_file)
 
         input_points = dataset_module.IMMPoints(filename='data/imm_face_db/40-3m.asf')
         input_image = input_points.get_image()
@@ -198,8 +195,8 @@ def show_reconstruction(args):
 
     dataset_module = import_dataset_module(args.shape_type)
 
-    shape_model = pca.PcaModel(args.model_shape_file)
-    texture_model = pca.PcaModel(args.model_texture_file)
+    shape_model = pca.PCAModel(args.model_shape_file)
+    texture_model = pca.PCAModel(args.model_texture_file)
 
     input_points = dataset_module.IMMPoints(
         filename='data/imm_face_db/40-3m.asf'

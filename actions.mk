@@ -63,14 +63,18 @@ graph_reconstruction:
 		--shape_type imm \
 		--n_components 6
 
+.PHONY:= test
 test:
 	python -m py.test -f src/test/*_test.py
 
+.PHONY:= server
 server:
 	(cd src/; python -m tornado.autoreload server.py)
 
+.PHONY:= ember
 ember:
 	(cd viewer; ember server);
 
+.PHONY:= ctags
 ctags:
 	ctags -R --python-kinds=-i src

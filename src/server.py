@@ -1,7 +1,6 @@
 import json
 import os.path
 import base64
-from cStringIO import StringIO
 from glob import glob
 
 import cv2
@@ -31,8 +30,8 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
         model_texture_file = '{}/pca_texture_model.npy'.format(FILES_DIR)
         model_shape_file = '{}/pca_shape_model.npy'.format(FILES_DIR)
 
-        self.shape_model = pca.PcaModel(model_shape_file)
-        self.texture_model = pca.PcaModel(model_texture_file)
+        self.shape_model = pca.PCAModel(model_shape_file)
+        self.texture_model = pca.PCAModel(model_texture_file)
 
         websocket.WebSocketHandler.__init__(self, *args, **kwargs)
 

@@ -1,7 +1,9 @@
 import numpy as np
 
+from settings import logger
 
-class PcaModel:
+
+class PCAModel:
     """
     Abstraction for a pca model file. The pca model is stored in a numpy file
     using numpy.save. The following information is stored:
@@ -15,7 +17,7 @@ class PcaModel:
 
 
     Examples:
-        pca = PcaModel(path_to_numpy_model_file)
+        pca = PCAModel(path_to_numpy_model_file)
     """
     def __init__(self, filename=None):
         self.filename = filename
@@ -51,8 +53,7 @@ class PcaModel:
         assert hasattr(self, 'mean_values')
         assert hasattr(self, 'triangles')
 
-        saving = np.asarray(
-            [
+        saving = np.asarray([
                 self.Vt,
                 self.s,
                 self.n_components,
@@ -65,23 +66,23 @@ class PcaModel:
 
     def load(self):
         """
-        Loads the numpy file, see PcaModel whichs uses this function to load
+        Loads the numpy file, see PCAModel whichs uses this function to load
         the PCA Model data.
 
         Returns:
             (tuple): Vt, s, n_components, mean_values and triangles
             Vt (numpy ndarray): Two dimensional array with dimensions
             (n_features, n_features)
-            n_components: number of components needed to cover .90 percent of the
-            variance
-            mean_values (numpy ndarray): mean values of the features of the model,
-            this should have dimensions (n_featurs, )
+            n_components: number of components needed to cover .90 percent of
+            the variance
+            mean_values (numpy ndarray): mean values of the features of the
+            model, this should have dimensions (n_features, )
             triangles: a list of lists of indices that form a triangles in the
             AAM list.
 
         Examples:
             We would advise not to use this function directly but to use the
-            PcaModel. See the :class:`PcaModel`
+            PCAModel. See the :class:`PCAModel`
 
         """
         pca_model = np.load(self.filename)
@@ -94,12 +95,29 @@ class PcaModel:
 
 def pca(data, mean_values, variance_percentage=90):
     """
-    Perform Singlar Value Decomposition
+    Perform Singlar Value Decomposition which we see as a PCA analysis
+    We calculate how many components are needed to get `variance_percentage`
+    (default is 90 percent).
+
+    Args:
+        data(ndarray): list of flattened feature vectors.
+        mean_values(ndarray): mean of all data flattened feature vectors,
+        in the same order.
+
+    Kwargs:
+        variance_percentage(int): is to calculate how many components you would
+        need to keep 90 (default is 90) percent of the variance. Note that we
+        do not alter any data, just return extra information in the form of
+        `n_components`, so that the user knows how much components it could
+        keep or to discard to still have 90 percent of the variance.
 
     Returns:
-        U (ndarray): U matrix
-        s (ndarray): 1d singular values (diagonal in array form)
-        Vt (ndarray): Vt matrix
+        tuple of:
+            U (ndarray): U matrix
+            s (ndarray): 1d singular values in flattened form.
+            Vt (ndarray): Vt matrix
+            n_components(int): The amount of components that (together) form
+            `variance_percentage` of variance.
     """
     # subtract mean
     zero_mean = data - mean_values
@@ -115,6 +133,7 @@ def pca(data, mean_values, variance_percentage=90):
         i += 1
 
     n_components = i
+    logger.debug('%s components form %s of the variance', n_components, variance_percentage)
 
     return U, s, Vt, n_components
 
@@ -124,13 +143,13 @@ def reconstruct(feature_vector, Vt, mean_values, n_components=None):
     Reconstruct with U, s, Vt
 
     Args:
-        U (numpy ndarray): One feature vector from the reduced SVD.
+        U (numpy ndarray): One feature vector from the SVD.
             U should have shape (n_features,), (i.e., one dimensional)
         s (numpy ndarray): The singular values as a one dimensional array
         Vt (numpy ndarray): Two dimensional array with dimensions
         (n_features, n_features)
-        mean_values (numpy ndarray): mean values of the features of the model,
-        this should have dimensions (n_features, )
+        mean_values (numpy ndarray): mean values of the features of the
+        model, this should have dimensions (n_features, )
 
     """
 

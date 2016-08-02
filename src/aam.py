@@ -1,11 +1,10 @@
 """
 .. module:: active_appearance_model
-   :platform: Unix, Windows
+   :platform: Unix
    :synopsis: Contains the aam data format abstraction layer
 
 """
 
-import logging
 import numpy as np
 from matplotlib.tri import Triangulation
 import cv2
@@ -13,13 +12,7 @@ import cv2
 # local imports
 import pca
 import reconstruction.texture as tx
-
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s %(levelname)s %(name)s: %(message)s'
-)
-logger = logging.getLogger(__name__)
+from settings import logger
 
 
 class AAMPoints():

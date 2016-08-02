@@ -48,8 +48,8 @@ def test_zero_mean_aan():
 
 
 def test_build_texture_feature_vectors():
-    shape_model = pca.PcaModel('data/test_data/pca_shape_model.npy')
-    texture_model = pca.PcaModel('data/test_data/pca_texture_model.npy')
+    shape_model = pca.PCAModel('data/test_data/pca_shape_model.npy')
+    texture_model = pca.PCAModel('data/test_data/pca_texture_model.npy')
 
     input_points = imm.IMMPoints(filename='data/imm_face_db/40-3m.asf')
     input_image = input_points.get_image()
