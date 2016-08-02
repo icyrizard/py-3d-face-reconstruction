@@ -20,48 +20,29 @@ cdef inline float cross_product(int v1_x, int v1_y, int v2_x, int v2_y):
     return (v1_x * v2_y) - (v1_y * v2_x)
 
 
-def cartesian2barycentric_slow_test(int r1_x, r1_y, int r2_x, int r2_y, int r3_x, int r3_y, int r_x, int r_y):
-    """
-    Given a triangle spanned by three cartesion points
-    r1, r2, r2, and point r, return the barycentric weights l1, l2, l3.
-
-    Returns:
-        ndarray (of dim 3) weights of the barycentric coordinates
-
-    """
-    a = np.array([
-        [r1_x, r2_x, r3_x],
-        [r1_y, r2_y, r3_y],
-        [1, 1, 1]
-    ])
-
-    b = np.array([r_x, r_y, 1])
-
-    return np.linalg.solve(a, b)
-
-
 def cartesian2barycentric_test(
-        float x_1, float y_1, float x_2, float y_2, float x_3, float y_3, float x, float y):
+        float x1, float y1, float x2, float y2, float x3, float y3, float x, float y):
     """
     lambda_1 = (y_2 - y_3)(x - x_3) + (x_3 - x_2)(y - y_3) /
                 (y_2-y_3)(x_1-x_3)+(x_3-x_2)(y_1-y_3)
+
     lambda_2 = (y_3 - y_1)(x - x_3) + (x_1 - x_3)(y - y_3) /
                 (y_2-y_3)(x_1-x_3)+(x_3-x_2)(y_1-y_3)
+
     lambda_3 = 1 lambda_1 - lambda_2
 
     Returns:
         ndarray (of dim 3) weights of the barycentric coordinates
 
     """
-    cdef float lambda_1 = ((y_2 - y_3) * (x - x_3) + (x_3 - x_2) * (y - y_3)) / \
-                            ((y_2 - y_3) * (x_1 - x_3) + (x_3 - x_2) * (y_1 - y_3))
 
-    cdef float lambda_2 = ((y_3 - y_1) * (x - x_3) + (x_1 - x_3) * (y - y_3)) / \
-                            ((y_2 - y_3) * (x_1 - x_3) + (x_3 - x_2) * (y_1 - y_3))
+    cdef c_array.array dst_loc = c_array.array('f', [0., 0., 0.])
 
-    cdef float lambda_3 = 1 - lambda_1 - lambda_2
+    cartesian2barycentric(
+        x1, y1, x2, y2, x3, y3, x, y, dst_loc
+    )
 
-    return [lambda_1, lambda_2, lambda_3]
+    return dst_loc
 
 
 cdef inline cartesian2barycentric(

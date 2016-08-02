@@ -1,3 +1,11 @@
+"""
+.. module:: datasets
+   :platform: Unix, Windows
+   :synopsis: Contains imm dataset abstraction layer
+
+
+"""
+
 from matplotlib.tri import Triangulation
 
 import cv2
@@ -30,12 +38,46 @@ class IMMPoints(aam.AAMPoints):
         )
 
     def get_points(self):
+        """
+        Get the flattened list of points
+
+        Returns:
+            ndarray. flattened array of points, see AAMPoints for more
+            information.
+        """
         return self.normalized_flattened_points_list
 
+    def __get_image(self):
+        """
+        Get the image corresponding to the self.image_file
+
+        Returns:
+            ndarray image
+        """
+        assert hasattr(self, 'image_file'), 'image_file name should be set, \
+                import file must be invoked first'
+        self.image = cv2.imread(self.image_file)
+
     def get_image(self):
-        return cv2.imread(self.image_file)
+        """
+        Get the image corresponding to the filename
+        If filename == image_1.asf, then we read image_1.jpg from disk
+        and return this to the user.
+
+        Returns:
+            ndarray image
+        """
+        return self.image
 
     def import_file(self, filename):
+        """
+        Import an .asf filename. Load the points into a list of points and
+        store the relative path to image file.
+
+        Returns:
+            ndarray(float). Numpy array of landmark locations as stated in the
+            .asf files.
+        """
         points_list = []
 
         with open(filename, 'r') as f:
@@ -43,6 +85,7 @@ class IMMPoints(aam.AAMPoints):
             data = lines[16:74]
             dir_name = os.path.dirname(filename)
             self.image_file = "{}/{}".format(dir_name, lines[-1].strip())
+            self.__get_image()
 
             for d in data:
                 points_list.append(d.split()[2:4])
@@ -85,6 +128,16 @@ class IMMPoints(aam.AAMPoints):
 
 
 def get_imm_points(files):
+    """
+    This function does something.
+
+    Args:
+        files (array):  Array of .asf full or relative path to .asf files.
+
+    Returns:
+        ndarray. Array of landmarks.
+
+    """
     points = []
 
     for f in files:
@@ -95,6 +148,15 @@ def get_imm_points(files):
 
 
 def get_imm_image_with_landmarks(filename):
+    """
+    Get Points with image and landmarks/points
+
+    Args:
+        filename(fullpath): .asf file
+
+    Returns:
+        image, points
+    """
     imm = IMMPoints(filename=filename)
     return imm.get_image(), imm.get_points()
 

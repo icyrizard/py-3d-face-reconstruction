@@ -1,0 +1,276 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Datasets &mdash; 3D Face Reconstruction 0.1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="3D Face Reconstruction 0.1 documentation" href="index.html"/>
+        <link rel="next" title="AAM Module" href="aam.html"/>
+        <link rel="prev" title="Welcome to 3D Face Reconstruction’s documentation!" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> 3D Face Reconstruction
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="aam.html">AAM Module</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">3D Face Reconstruction</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Datasets</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/datasets.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-datasets.imm">
+<span id="datasets"></span><h1>Datasets<a class="headerlink" href="#module-datasets.imm" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-datasets"></span><dl class="class">
+<dt id="datasets.imm.IMMPoints">
+<em class="property">class </em><code class="descclassname">datasets.imm.</code><code class="descname">IMMPoints</code><span class="sig-paren">(</span><em>filename=None</em>, <em>points_list=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datasets/imm.html#IMMPoints"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datasets.imm.IMMPoints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accepts IMM datapoint file which can be shown or used</p>
+<dl class="method">
+<dt id="datasets.imm.IMMPoints.get_image">
+<code class="descname">get_image</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datasets/imm.html#IMMPoints.get_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datasets.imm.IMMPoints.get_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the image corresponding to the filename
+If filename == image_1.asf, then we read image_1.jpg from disk
+and return this to the user.</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>ndarray image</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="datasets.imm.IMMPoints.get_points">
+<code class="descname">get_points</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/datasets/imm.html#IMMPoints.get_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datasets.imm.IMMPoints.get_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the flattened list of points</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>ndarray. flattened array of points, see AAMPoints for more
+information.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="datasets.imm.IMMPoints.import_file">
+<code class="descname">import_file</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datasets/imm.html#IMMPoints.import_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datasets.imm.IMMPoints.import_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Import an .asf filename. Load the points into a list of points and
+store the relative path to image file.</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>ndarray(float). Numpy array of landmark locations as stated in the
+.asf files.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="datasets.imm.IMMPoints.show">
+<code class="descname">show</code><span class="sig-paren">(</span><em>window_name='image'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datasets/imm.html#IMMPoints.show"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datasets.imm.IMMPoints.show" title="Permalink to this definition">¶</a></dt>
+<dd><p>show the image and datapoints on the image</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="datasets.imm.get_imm_image_with_landmarks">
+<code class="descclassname">datasets.imm.</code><code class="descname">get_imm_image_with_landmarks</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datasets/imm.html#get_imm_image_with_landmarks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datasets.imm.get_imm_image_with_landmarks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get Points with image and landmarks/points</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>filename(fullpath): .asf file</dd>
+<dt>Returns:</dt>
+<dd>image, points</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="datasets.imm.get_imm_points">
+<code class="descclassname">datasets.imm.</code><code class="descname">get_imm_points</code><span class="sig-paren">(</span><em>files</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datasets/imm.html#get_imm_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datasets.imm.get_imm_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function does something.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>files (array):  Array of .asf full or relative path to .asf files.</dd>
+<dt>Returns:</dt>
+<dd>ndarray. Array of landmarks.</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="aam.html" class="btn btn-neutral float-right" title="AAM Module" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="Welcome to 3D Face Reconstruction’s documentation!" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Richard Torenvliet.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

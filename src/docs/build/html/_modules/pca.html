@@ -1,0 +1,346 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>pca &mdash; 3D Face Reconstruction 0.1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="3D Face Reconstruction 0.1 documentation" href="../index.html"/>
+        <link rel="up" title="Module code" href="index.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> 3D Face Reconstruction
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../datasets.html">Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../aam.html">AAM Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pca.html">PCA Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reconstruction/reconstruction.html">Reconstruction Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reconstruction/texture.html">Texture Module</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">3D Face Reconstruction</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="index.html">Module code</a> &raquo;</li>
+      
+    <li>pca</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for pca</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<div class="viewcode-block" id="PcaModel"><a class="viewcode-back" href="../pca.html#pca.PcaModel">[docs]</a><span class="k">class</span> <span class="nc">PcaModel</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Abstraction for a pca model&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_file</span><span class="p">):</span>
+        <span class="n">Vtm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">model_file</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Vt</span> <span class="o">=</span> <span class="n">Vtm</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s</span> <span class="o">=</span> <span class="n">Vtm</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_components</span> <span class="o">=</span> <span class="n">Vtm</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mean_values</span> <span class="o">=</span> <span class="n">Vtm</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">triangles</span> <span class="o">=</span> <span class="n">Vtm</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="pca"><a class="viewcode-back" href="../pca.html#pca.pca">[docs]</a><span class="k">def</span> <span class="nf">pca</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mean_values</span><span class="p">,</span> <span class="n">variance_percentage</span><span class="o">=</span><span class="mi">90</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Perform Singlar Value Decomposition</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        U (ndarray): U matrix</span>
+<span class="sd">        s (ndarray): 1d singular values (diagonal in array form)</span>
+<span class="sd">        Vt (ndarray): Vt matrix</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># subtract mean</span>
+    <span class="n">zero_mean</span> <span class="o">=</span> <span class="n">data</span> <span class="o">-</span> <span class="n">mean_values</span>
+    <span class="n">U</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">Vt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">svd</span><span class="p">(</span><span class="n">zero_mean</span><span class="p">,</span> <span class="n">full_matrices</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="c1"># calculate n_components which captures 90 percent of the variance</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">subtotal</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">while</span> <span class="p">(</span><span class="n">subtotal</span> <span class="o">*</span> <span class="mf">100.0</span><span class="p">)</span> <span class="o">/</span> <span class="n">total</span> <span class="o">&lt;=</span> <span class="n">variance_percentage</span><span class="p">:</span>
+        <span class="n">subtotal</span> <span class="o">+=</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="n">n_components</span> <span class="o">=</span> <span class="n">i</span>
+
+    <span class="k">return</span> <span class="n">U</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">Vt</span><span class="p">,</span> <span class="n">n_components</span></div>
+
+
+<div class="viewcode-block" id="reconstruct"><a class="viewcode-back" href="../pca.html#pca.reconstruct">[docs]</a><span class="k">def</span> <span class="nf">reconstruct</span><span class="p">(</span><span class="n">feature_vector</span><span class="p">,</span> <span class="n">Vt</span><span class="p">,</span> <span class="n">mean_values</span><span class="p">,</span> <span class="n">n_components</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reconstruct with U, s, Vt</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        U (numpy ndarray): One feature vector from the reduced SVD.</span>
+<span class="sd">            U should have shape (n_features,), (i.e., one dimensional)</span>
+<span class="sd">        s (numpy ndarray): The singular values as a one dimensional array</span>
+<span class="sd">        Vt (numpy ndarray): Two dimensional array with dimensions</span>
+<span class="sd">        (n_features, n_features)</span>
+<span class="sd">        mean_values (numpy ndarray): mean values of the features of the model,</span>
+<span class="sd">        this should have dimensions (n_features, )</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">n_components</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">n_components</span> <span class="o">=</span> <span class="n">Vt</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">zm</span> <span class="o">=</span> <span class="n">feature_vector</span> <span class="o">-</span> <span class="n">mean_values</span>
+    <span class="n">yk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">Vt</span><span class="p">[:</span><span class="n">n_components</span><span class="p">],</span> <span class="n">zm</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">Vt</span><span class="p">[:</span><span class="n">n_components</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">yk</span><span class="p">)</span> <span class="o">+</span> <span class="n">mean_values</span></div>
+
+
+<div class="viewcode-block" id="save"><a class="viewcode-back" href="../pca.html#pca.save">[docs]</a><span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="n">Vt</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">n_components</span><span class="p">,</span> <span class="n">mean_values</span><span class="p">,</span> <span class="n">triangles</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Store the U, s, Vt and mean of all the asf datafiles given by the asf</span>
+<span class="sd">    files.</span>
+
+<span class="sd">    It is stored in the following way:</span>
+<span class="sd">        np.load(filename, np.assary([Vt, [mean_values]])</span>
+
+<span class="sd">    And accessed by:</span>
+<span class="sd">        Vtm = np.load(args.model_file)</span>
+
+<span class="sd">        Vt = Vtm[0]</span>
+<span class="sd">        mean_values = Vtm[1][0]</span>
+<span class="sd">        triangles = Vtm[2]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">saving</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="n">Vt</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">n_components</span><span class="p">,</span> <span class="p">[</span><span class="n">mean_values</span><span class="p">],</span> <span class="n">triangles</span><span class="p">])</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">saving</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="load"><a class="viewcode-back" href="../pca.html#pca.load">[docs]</a><span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The model stored by pca.store (see ``pca.store`` method above) is loaded as:</span>
+<span class="sd">        UsVtm = np.load(args.model_file)</span>
+
+<span class="sd">        Vt = Vtm[0]</span>
+<span class="sd">        mean_values = Vtm[1][0]</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">           (tuple): Vt, mean_values</span>
+
+<span class="sd">            Vt (numpy ndarray): Two dimensional array with dimensions</span>
+<span class="sd">            (n_features, n_features)</span>
+<span class="sd">            mean_values (numpy ndarray): mean values of the features of the model,</span>
+<span class="sd">            this should have dimensions (n_featurs, )</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># load the stored model file</span>
+    <span class="n">Vtm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
+    <span class="n">Vt</span> <span class="o">=</span> <span class="n">Vtm</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">Vtm</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">n_components</span> <span class="o">=</span> <span class="n">Vtm</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">mean_values</span> <span class="o">=</span> <span class="n">Vtm</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">triangles</span> <span class="o">=</span> <span class="n">Vtm</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">Vt</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">n_components</span><span class="p">,</span> <span class="n">mean_values</span><span class="p">,</span> <span class="n">triangles</span></div>
+
+
+<span class="c1">#def load_model(filename):</span>
+<span class="c1">#    # load the stored model file</span>
+<span class="c1">#    return PcaModel(filename)</span>
+
+
+<div class="viewcode-block" id="flatten_feature_vectors"><a class="viewcode-back" href="../pca.html#pca.flatten_feature_vectors">[docs]</a><span class="k">def</span> <span class="nf">flatten_feature_vectors</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Flattens the feature vectors inside a ndarray</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        input:</span>
+<span class="sd">        [</span>
+<span class="sd">            [[1, 2], [3, 4], [5, 6]],</span>
+<span class="sd">            ...</span>
+<span class="sd">            [[1, 2], [3, 4], [5, 6]]</span>
+<span class="sd">        ]</span>
+<span class="sd">        output:</span>
+<span class="sd">        [</span>
+<span class="sd">            [1, 2, 3, 4, 5, 6],</span>
+<span class="sd">            ...</span>
+<span class="sd">            [1, 2, 3, 4, 5, 6]</span>
+<span class="sd">        ]</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (numpy array): array of feature vectors</span>
+<span class="sd">        dim (int): dimension to flatten the data</span>
+
+<span class="sd">    return:</span>
+<span class="sd">        array: (numpy array): array flattened feature vectors</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">flattened</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">n</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">flattened</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">flattened</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Richard Torenvliet.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

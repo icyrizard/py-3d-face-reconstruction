@@ -4,9 +4,9 @@ import pytest
 
 import aam
 import pca
-import imm
+import datasets.imm as imm
 
-from reconstruction import triangles as tri
+from reconstruction import reconstruction
 
 
 def test_build_mean_aan():
@@ -48,32 +48,20 @@ def test_zero_mean_aan():
 
 
 def test_build_texture_feature_vectors():
-    Vt_shape, s, n_shape_components, mean_value_points, triangles = pca.load('data/test_data/pca_shape_model.npy')
-    Vt_texture, s_texture, n_texture_components, mean_values_texture, _ = pca.load('data/test_data/pca_texture_model.npy')
+    shape_model = pca.PcaModel('data/test_data/pca_shape_model.npy')
+    texture_model = pca.PcaModel('data/test_data/pca_texture_model.npy')
 
-    InputPoints = imm.IMMPoints(filename='data/imm_face_db/40-3m.asf')
-    input_image = InputPoints.get_image()
+    input_points = imm.IMMPoints(filename='data/imm_face_db/40-3m.asf')
+    input_image = input_points.get_image()
 
-    MeanPoints = imm.IMMPoints(points_list=mean_value_points)
-    mean_points = MeanPoints.get_scaled_points(input_image.shape)
-    input_points = InputPoints.get_scaled_points(input_image.shape)
-
-    tri.reconstruct_texture(input_image, input_image, Vt_texture, input_points, mean_points,
-                            mean_values_texture, triangles, n_texture_components)
-    dst = tri.get_texture(mean_points, mean_values_texture)
+    mean_points = imm.IMMPoints(points_list=shape_model.mean_values)
+    mean_points = mean_points.get_scaled_points(input_image.shape)
+    input_points = input_points.get_scaled_points(input_image.shape)
 
     assert np.mean(input_points) > 1.0, 'should be greater than 1.0, because \
         it array should be scaled to the image width and height'
     assert np.mean(mean_points) > 1.0, 'should be greater than 1.0, because \
         it array should be scaled to the image width and height'
-
-    #cv2.imshow('original', imm_points.get_image())
-    #cv2.imshow('reconstructed', input_image)
-    #cv2.imshow('main face', dst)
-
-    #cv2.waitKey(0) & 0xFF
-
-    #cv2.destroyAllWindows()
 
 
 @pytest.mark.skipif(True, reason='not suitable for pytest')

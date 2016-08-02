@@ -17,21 +17,16 @@ data/pca_shape_model.npy:
 	python src/main.py \
 		--save_pca_shape \
 		--files `./scripts/imm_train_set.sh` \
-		--model_shape_file data/pca_shape_model
+		--model_shape_file data/pca_shape_model \
+		--shape_type imm
 
 data/pca_texture_model.npy:
 	python src/main.py \
 		--save_pca_texture \
 		--files `./scripts/imm_train_set.sh` \
 		--model_texture_file data/pca_texture_model \
-		--model_shape_file data/pca_shape_model.npy
-
-show_pca:
-	python src/main.py \
-		--show_pca \
-		--model_texture_file data/pca_texture_model.npy \
-		--model_shape_file data/pca_shape_model.npy
-
+		--model_shape_file data/pca_shape_model.npy \
+		--shape_type imm
 
 test_model:
 	python src/main.py \
@@ -47,6 +42,7 @@ show_reconstruction:
 		--files data/imm_face_db/*.asf \
 		--model_texture_file data/pca_texture_model.npy \
 		--model_shape_file data/pca_shape_model.npy \
+		--shape_type imm \
 		--n_components 6
 
 profile_reconstruction:
@@ -55,6 +51,7 @@ profile_reconstruction:
 		--files data/imm_face_db/*.asf \
 		--model_texture_file data/pca_texture_model.npy \
 		--model_shape_file data/pca_shape_model.npy \
+		--shape_type imm \
 		--n_components 6
 
 graph_reconstruction:
@@ -63,6 +60,7 @@ graph_reconstruction:
 		--files data/imm_face_db/*.asf \
 		--model_texture_file data/pca_texture_model.npy \
 		--model_shape_file data/pca_shape_model.npy \
+		--shape_type imm \
 		--n_components 6
 
 show_kivy:
@@ -74,10 +72,7 @@ show_kivy:
 		--n_components 6
 
 test:
-	python -m py.test -f src/*_test.py
-
-test_modules:
-	python -m py.test -f src/*/*_test.py
+	python -m py.test -f src/test/*_test.py
 
 server:
 	(cd src/; python -m tornado.autoreload server.py)

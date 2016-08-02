@@ -1,0 +1,363 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>AAM Module &mdash; 3D Face Reconstruction 0.1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="3D Face Reconstruction 0.1 documentation" href="index.html"/>
+        <link rel="prev" title="Datasets" href="datasets.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> 3D Face Reconstruction
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="datasets.html">Datasets</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">AAM Module</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">3D Face Reconstruction</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>AAM Module</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/aam.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-aam">
+<span id="aam-module"></span><h1>AAM Module<a class="headerlink" href="#module-aam" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-active_appearance_model"></span><dl class="class">
+<dt id="aam.AAMPoints">
+<em class="property">class </em><code class="descclassname">aam.</code><code class="descname">AAMPoints</code><span class="sig-paren">(</span><em>normalized_flattened_points_list=None</em>, <em>points_list=None</em>, <em>actual_shape=()</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aam.html#AAMPoints"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aam.AAMPoints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Object to store AAM points / landmarks. Tries to keep the scaling of
+these points transparent.</p>
+<dl class="method">
+<dt id="aam.AAMPoints.calculate_bounding_box">
+<code class="descname">calculate_bounding_box</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/aam.html#AAMPoints.calculate_bounding_box"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aam.AAMPoints.calculate_bounding_box" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate bounding box in the <strong>scaled</strong> points list
+The empasis on on scaled because the convexHull does not support
+small values, the normalized_flattened_points_list does not work.</p>
+<p>Use get_scaled_points first, with a shape that is needed. The shape
+should be the dimensions of the out image, example (480, 640), ie., (height,
+width)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="aam.AAMPoints.get_bounding_box">
+<code class="descname">get_bounding_box</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/aam.html#AAMPoints.get_bounding_box"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aam.AAMPoints.get_bounding_box" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the bounding box around the points.</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd><dl class="first last docutils">
+<dt>OpenCV rectangle:</dt>
+<dd>x, y, w, h</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="aam.AAMPoints.get_scaled_points">
+<code class="descname">get_scaled_points</code><span class="sig-paren">(</span><em>width_height_dimensions</em>, <em>rescale=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aam.html#AAMPoints.get_scaled_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aam.AAMPoints.get_scaled_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scale the normalized flattened points list to a scale given by &#8216;shape&#8217;.
+The x and y values should be scaled to the width and height of the image.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>shape(tuple): (height, width)
+rescal(boolean): flag if we should rescale or not because if we
+already scaled, we are not going to do it again by
+default.</dd>
+<dt>Returns:</dt>
+<dd>ndarray scaled to &#8216;shape&#8217; width and height.</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="aam.build_shape_feature_vectors">
+<code class="descclassname">aam.</code><code class="descname">build_shape_feature_vectors</code><span class="sig-paren">(</span><em>files</em>, <em>get_points</em>, <em>flattened=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aam.html#build_shape_feature_vectors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aam.build_shape_feature_vectors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the aam points from the files and appends them seperately to one
+array.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>files (list): list files
+get_points(function): function that gets the points/landmarks given
+a list of files.</dd>
+<dt>Returns:</dt>
+<dd>list. List of feature vectors</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="aam.build_texture_feature_vectors">
+<code class="descclassname">aam.</code><code class="descname">build_texture_feature_vectors</code><span class="sig-paren">(</span><em>files</em>, <em>get_image_with_points</em>, <em>mean_points</em>, <em>triangles</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aam.html#build_texture_feature_vectors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aam.build_texture_feature_vectors" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Args:</dt>
+<dd>files (list): list files
+get_image_with_points (function): That can return the image together
+with the location.
+mean_points(AAMPoints): AAMPoints object</dd>
+<dt>Returns:</dt>
+<dd>list: list of feature vectors</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="aam.get_mean">
+<code class="descclassname">aam.</code><code class="descname">get_mean</code><span class="sig-paren">(</span><em>vector</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aam.html#get_mean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aam.get_mean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a mean from a matrix of x,y values</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>points(numpy array) that follows the following structure:</dd>
+<dt>Returns:</dt>
+<dd>mean_values (numpy array)</dd>
+<dt>Example:</dt>
+<dd><dl class="first last docutils">
+<dt>Input observations:</dt>
+<dd><ol class="first arabic" start="0">
+<li><p class="first">[[x_0_0, y_0_0], ... , [x_0_m, y_0_m]],</p>
+</li>
+<li><p class="first">[[x_1_0, y_1_0], ... , [x_1_m, y_1_m]],</p>
+</li>
+<li><p class="first">[[x_2_0, y_2_0], ... , [x_2_m, y_2_m]],</p>
+</li>
+<li><p class="first">[[x_3_0, y_3_0], ... , [x_3_m, y_3_m]]</p>
+<blockquote>
+<div><p>....           ....       .....</p>
+</div></blockquote>
+</li>
+</ol>
+<ol class="last loweralpha simple" start="14">
+<li>[[x_4_0, y_4_0], ... , [x_n_m, y_n_m]]</li>
+</ol>
+</dd>
+<dt>This vector containts the mean values of the corresponding column, like so:</dt>
+<dd><ol class="first arabic" start="0">
+<li><p class="first">[[x_0_0, y_0_0], ... , [x_0_k, y_0_k]],</p>
+</li>
+<li><p class="first">[[x_1_0, y_1_0], ... , [x_1_k, y_1_k]],</p>
+</li>
+<li><p class="first">[[x_2_0, y_2_0], ... , [x_2_k, y_2_k]],</p>
+</li>
+<li><p class="first">[[x_3_0, y_3_0], ... , [x_3_k, y_3_k]]</p>
+<blockquote>
+<div><p>....           ....       .....</p>
+</div></blockquote>
+</li>
+</ol>
+<ol class="loweralpha simple" start="14">
+<li>[[x_4_0, y_4_0], ... , [x_n_k, y_n_k]]</li>
+</ol>
+<p class="last">mean. [[x_mean_0, y_mean_0], ... [x_mean_n, y_mean_n]]</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="aam.get_pixel_values">
+<code class="descclassname">aam.</code><code class="descname">get_pixel_values</code><span class="sig-paren">(</span><em>image</em>, <em>points</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aam.html#get_pixel_values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aam.get_pixel_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>deprecated</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="aam.get_triangles">
+<code class="descclassname">aam.</code><code class="descname">get_triangles</code><span class="sig-paren">(</span><em>x_vector</em>, <em>y_vector</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aam.html#get_triangles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aam.get_triangles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform triangulation between two 2d vectors</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>x_vector(ndarray): list of x locations
+y_vector(ndarray): list of y locations</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="aam.sample_from_triangles">
+<code class="descclassname">aam.</code><code class="descname">sample_from_triangles</code><span class="sig-paren">(</span><em>src</em>, <em>points2d_src</em>, <em>points2d_dst</em>, <em>triangles</em>, <em>dst</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aam.html#sample_from_triangles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#aam.sample_from_triangles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get pixels from within the  triangles [[p1, p2, p3]_0, .. [p1, p2, p3]_n].</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><p class="first">src(ndarray, dtype=uint8): input image</p>
+<p>points2d_src(ndarray, dtype=np.int32): shape array [[x, y], ... [x, y]]</p>
+<p>points2d_dst(ndarray, dtype=np.int32): shape array [[x, y], ... [x, y]]</p>
+<p class="last">triangles(ndarray, ndim=3, dtype=np.int32): shape array [[p1, p2, p3]_0, .. [p1, p2, p3]_n].</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="datasets.html" class="btn btn-neutral" title="Datasets" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Richard Torenvliet.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

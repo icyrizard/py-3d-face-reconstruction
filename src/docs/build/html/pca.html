@@ -1,0 +1,313 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>PCA Module &mdash; 3D Face Reconstruction 0.1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="3D Face Reconstruction 0.1 documentation" href="index.html"/>
+        <link rel="next" title="Reconstruction Module" href="reconstruction/reconstruction.html"/>
+        <link rel="prev" title="AAM Module" href="aam.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> 3D Face Reconstruction
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="datasets.html">Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="aam.html">AAM Module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">PCA Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reconstruction/reconstruction.html">Reconstruction Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reconstruction/texture.html">Texture Module</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">3D Face Reconstruction</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>PCA Module</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/pca.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-pca">
+<span id="pca-module"></span><h1>PCA Module<a class="headerlink" href="#module-pca" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="pca.PcaModel">
+<em class="property">class </em><code class="descclassname">pca.</code><code class="descname">PcaModel</code><span class="sig-paren">(</span><em>model_file</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pca.html#PcaModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pca.PcaModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Abstraction for a pca model</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pca.flatten_feature_vectors">
+<code class="descclassname">pca.</code><code class="descname">flatten_feature_vectors</code><span class="sig-paren">(</span><em>data</em>, <em>dim=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pca.html#flatten_feature_vectors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pca.flatten_feature_vectors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flattens the feature vectors inside a ndarray</p>
+<dl class="docutils">
+<dt>Example:</dt>
+<dd><p class="first">input:
+[</p>
+<blockquote>
+<div>[[1, 2], [3, 4], [5, 6]],
+...
+[[1, 2], [3, 4], [5, 6]]</div></blockquote>
+<p>]
+output:
+[</p>
+<blockquote>
+<div>[1, 2, 3, 4, 5, 6],
+...
+[1, 2, 3, 4, 5, 6]</div></blockquote>
+<p class="last">]</p>
+</dd>
+<dt>Args:</dt>
+<dd>data (numpy array): array of feature vectors
+dim (int): dimension to flatten the data</dd>
+<dt>return:</dt>
+<dd>array: (numpy array): array flattened feature vectors</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pca.load">
+<code class="descclassname">pca.</code><code class="descname">load</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pca.html#load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pca.load" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>The model stored by pca.store (see <code class="docutils literal"><span class="pre">pca.store</span></code> method above) is loaded as:</dt>
+<dd><p class="first">UsVtm = np.load(args.model_file)</p>
+<p>Vt = Vtm[0]
+mean_values = Vtm[1][0]</p>
+<dl class="last docutils">
+<dt>Returns:</dt>
+<dd><p class="first">(tuple): Vt, mean_values</p>
+<blockquote class="last">
+<div>Vt (numpy ndarray): Two dimensional array with dimensions
+(n_features, n_features)
+mean_values (numpy ndarray): mean values of the features of the model,
+this should have dimensions (n_featurs, )</div></blockquote>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pca.pca">
+<code class="descclassname">pca.</code><code class="descname">pca</code><span class="sig-paren">(</span><em>data</em>, <em>mean_values</em>, <em>variance_percentage=90</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pca.html#pca"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pca.pca" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform Singlar Value Decomposition</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>U (ndarray): U matrix
+s (ndarray): 1d singular values (diagonal in array form)
+Vt (ndarray): Vt matrix</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pca.reconstruct">
+<code class="descclassname">pca.</code><code class="descname">reconstruct</code><span class="sig-paren">(</span><em>feature_vector</em>, <em>Vt</em>, <em>mean_values</em>, <em>n_components=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pca.html#reconstruct"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pca.reconstruct" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reconstruct with U, s, Vt</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><dl class="first docutils">
+<dt>U (numpy ndarray): One feature vector from the reduced SVD.</dt>
+<dd>U should have shape (n_features,), (i.e., one dimensional)</dd>
+</dl>
+<p class="last">s (numpy ndarray): The singular values as a one dimensional array
+Vt (numpy ndarray): Two dimensional array with dimensions
+(n_features, n_features)
+mean_values (numpy ndarray): mean values of the features of the model,
+this should have dimensions (n_features, )</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pca.save">
+<code class="descclassname">pca.</code><code class="descname">save</code><span class="sig-paren">(</span><em>Vt</em>, <em>s</em>, <em>n_components</em>, <em>mean_values</em>, <em>triangles</em>, <em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pca.html#save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pca.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Store the U, s, Vt and mean of all the asf datafiles given by the asf
+files.</p>
+<dl class="docutils">
+<dt>It is stored in the following way:</dt>
+<dd>np.load(filename, np.assary([Vt, [mean_values]])</dd>
+<dt>And accessed by:</dt>
+<dd><p class="first">Vtm = np.load(args.model_file)</p>
+<p class="last">Vt = Vtm[0]
+mean_values = Vtm[1][0]
+triangles = Vtm[2]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="reconstruction/reconstruction.html" class="btn btn-neutral float-right" title="Reconstruction Module" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="aam.html" class="btn btn-neutral" title="AAM Module" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Richard Torenvliet.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

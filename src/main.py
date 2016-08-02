@@ -3,6 +3,7 @@
 import argparse
 import logging
 import sys
+import importlib
 
 # installed packages
 import cv2
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 def add_parser_options():
     parser = argparse.ArgumentParser(description='IMMPoints tool')
-    pca_group = parser.add_argument_group('show_pca')
+    pca_group = parser.add_argument_group('show_reconstruction')
 
     pca_group.add_argument(
         '--reconstruct', action='store_true',
@@ -46,11 +47,6 @@ def add_parser_options():
     pca_group.add_argument(
         '--save_pca_texture', action='store_true',
         help='save the pca texture model'
-    )
-
-    pca_group.add_argument(
-        '--show_pca', action='store_true',
-        help='Show and manipulate the saved PCA model'
     )
 
     pca_group.add_argument(
@@ -80,6 +76,18 @@ def add_parser_options():
     return parser
 
 
+def import_dataset_module(shape_type):
+    """
+    Includes the right implementation for the right dataset implementation for
+    the given shape type, see --help for the available options.
+
+    Args:
+        shape_type(string): Name of the python file inside the
+        `src/datasets` folder.
+    """
+    return importlib.import_module('datasets.{}'.format(shape_type))
+
+
 def save_pca_model_texture(args):
     """
     save the U, s, Vt and mean of all the asf datafiles given by the asf
@@ -99,17 +107,15 @@ def save_pca_model_texture(args):
     """
     assert args.files, '--files should be given'
     assert args.model_shape_file, '--model_texture_file needs to be provided to save the pca model'
-    assert args.model_texture_file, '--model_texture_file needs to be provided to save the pca model'
+    assert args.shape_type, '--shape_type the type of dataset, see datasets module'
 
+    dataset_module = import_dataset_module(args.shape_type)
     shape_model = pca.PcaModel(args.model_shape_file)
-
-    from datasets import imm
-
-    mean_points = imm.IMMPoints(points_list=shape_model.mean_values)
+    mean_points = dataset_module.IMMPoints(points_list=shape_model.mean_values)
 
     textures = aam.build_texture_feature_vectors(
         args.files,
-        imm.get_imm_image_with_landmarks,
+        dataset_module.get_imm_image_with_landmarks,  # function
         mean_points,
         shape_model.triangles
     )
@@ -141,10 +147,12 @@ def save_pca_model_shape(args):
     """
     assert args.files, '--files should be given'
     assert args.model_shape_file, '--model_shape_file needs to be provided to save the pca model'
-    from datasets import imm
+    assert args.shape_type, '--shape_type the type of dataset, see datasets module'
+
+    dataset_module = import_dataset_module(args.shape_type)
 
     points = aam.build_shape_feature_vectors(
-        args.files, imm.get_imm_points, flattened=True
+        args.files, dataset_module.get_imm_points, flattened=True
     )
 
     mean_values = aam.get_mean(points)
@@ -161,6 +169,9 @@ def save_pca_model_shape(args):
 def reconstruct_with_model(args):
     assert args.files, '--files should be given to allow the image to be shown'
     assert args.model_shape_file, '--model_shape_file needs to be provided to get the pca model'
+    assert args.shape_type, '--shape_type the type of dataset, see datasets module'
+
+    dataset_module = import_dataset_module(args.shape_type)
 
     # clear sys args. arguments are conflicting with parseargs
     # kivy will parse args upon import and will crash if it finds our
@@ -188,44 +199,13 @@ def reconstruct_with_model(args):
     app.run()
 
 
-def show_pca_model(args):
-    assert args.model_shape_file, '--model_texture_file needs to be provided to save the pca model'
-    assert args.model_texture_file, '--model_texture_file needs to be provided to save the pca model'
-
-    from reconstruction.triangles import draw_shape, get_texture
-
-    Vt_shape, s, n_shape_components, mean_value_points, triangles = pca.load(args.model_shape_file)
-    Vt_texture, s_texture, n_texture_components, mean_values_texture, _ = pca.load(args.model_texture_file)
-
-    imm_points = imm.IMMPoints(filename='data/imm_face_db/40-1m.asf')
-    input_image = imm_points.get_image()
-    input_points = imm_points.get_points()
-    h, w, c = input_image.shape
-
-    input_points[:, 0] = input_points[:, 0] * w
-    input_points[:, 1] = input_points[:, 1] * h
-
-    mean_value_points = mean_value_points.reshape((58, 2))
-    mean_value_points[:, 0] = mean_value_points[:, 0] * w
-    mean_value_points[:, 1] = mean_value_points[:, 1] * h
-
-    while True:
-        dst = get_texture(mean_value_points, mean_values_texture)
-
-        cv2.imshow('input_image', input_image)
-        cv2.imshow('image', dst)
-        k = cv2.waitKey(0) & 0xFF
-
-        if k == 27:
-            break
-
-    cv2.destroyAllWindows()
-
-
 def generate_call_graph(args):
     """Performance debug function, will be (re)moved later. """
     assert args.model_shape_file, '--model_texture_file needs to be provided to save the pca model'
     assert args.model_texture_file, '--model_texture_file needs to be provided to save the pca model'
+    assert args.shape_type, '--shape_type the type of dataset, see datasets module'
+
+    dataset_module = import_dataset_module(args.shape_type)
 
     from pycallgraph import PyCallGraph
     from pycallgraph.output import GraphvizOutput
@@ -236,10 +216,10 @@ def generate_call_graph(args):
         shape_model = pca.PcaModel(args.model_shape_file)
         texture_model = pca.PcaModel(args.model_texture_file)
 
-        input_points = imm.IMMPoints(filename='data/imm_face_db/40-3m.asf')
+        input_points = dataset_module.IMMPoints(filename='data/imm_face_db/40-3m.asf')
         input_image = input_points.get_image()
 
-        mean_points = imm.IMMPoints(points_list=shape_model.mean_values)
+        mean_points = dataset_module.IMMPoints(points_list=shape_model.mean_values)
         mean_points.get_scaled_points(input_image.shape)
 
         reconstruction.reconstruct_texture(
@@ -250,21 +230,23 @@ def generate_call_graph(args):
             mean_points,   # shape points mean
         )
 
-
 def show_reconstruction(args):
     assert args.model_shape_file, '--model_texture_file needs to be provided to save the pca model'
     assert args.model_texture_file, '--model_texture_file needs to be provided to save the pca model'
+    assert args.shape_type, '--shape_type the type of dataset, see datasets module'
 
-   # Vt_shape, s, n_shape_components, mean_value_points, triangles = pca.load(args.model_shape_file)
-   # Vt_texture, s_texture, n_texture_components, mean_values_texture, _ = pca.load(args.model_texture_file)
-    from datasets import imm
+    dataset_module = import_dataset_module(args.shape_type)
+
     shape_model = pca.PcaModel(args.model_shape_file)
     texture_model = pca.PcaModel(args.model_texture_file)
 
-    input_points = imm.IMMPoints(filename='data/imm_face_db/40-3m.asf')
+    input_points = dataset_module.IMMPoints(
+        filename='data/imm_face_db/40-3m.asf'
+    )
+
     input_image = input_points.get_image()
 
-    mean_points = imm.IMMPoints(points_list=shape_model.mean_values)
+    mean_points = dataset_module.IMMPoints(points_list=shape_model.mean_values)
     mean_points.get_scaled_points(input_image.shape)
 
     while True:
@@ -297,9 +279,7 @@ def main():
     parser = add_parser_options()
     args = parser.parse_args()
 
-    if args.show_pca:
-        show_pca_model(args)
-    elif args.save_pca_shape:
+    if args.save_pca_shape:
         save_pca_model_shape(args)
     elif args.save_pca_texture:
         save_pca_model_texture(args)

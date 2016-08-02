@@ -1,0 +1,244 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Welcome to 3D Face Reconstruction’s documentation! &mdash; 3D Face Reconstruction 0.1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="3D Face Reconstruction 0.1 documentation" href="#"/>
+        <link rel="next" title="Datasets" href="datasets.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="#" class="icon icon-home"> 3D Face Reconstruction
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="datasets.html">Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="aam.html">AAM Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pca.html">PCA Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reconstruction/reconstruction.html">Reconstruction Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reconstruction/texture.html">Texture Module</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="#">3D Face Reconstruction</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="#">Docs</a> &raquo;</li>
+      
+    <li>Welcome to 3D Face Reconstruction&#8217;s documentation!</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/index.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="welcome-to-3d-face-reconstruction-s-documentation">
+<h1>Welcome to 3D Face Reconstruction&#8217;s documentation!<a class="headerlink" href="#welcome-to-3d-face-reconstruction-s-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound" id="mastertoc">
+<p class="caption"><span class="caption-text">Table of Contents</span><a class="headerlink" href="#mastertoc" title="Permalink to this toctree">¶</a></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="datasets.html">Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="aam.html">AAM Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pca.html">PCA Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reconstruction/reconstruction.html">Reconstruction Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reconstruction/texture.html">Texture Module</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="work-in-progress">
+<h1>!!!Work in progress!!!<a class="headerlink" href="#work-in-progress" title="Permalink to this headline">¶</a></h1>
+</div>
+<div class="section" id="pca-reconstruction">
+<h1>PCA reconstruction<a class="headerlink" href="#pca-reconstruction" title="Permalink to this headline">¶</a></h1>
+<p>Principle Component Analysis is one of the most used methods in the field of statistics, it is used for dimension reduction of data and is capable of removing outliers which ultimately improves learning algorithms. In this case we use PCA for both shape and texture reconstruction. Given an image of person&#8217;s face we would be able to reconstruct it using a PCA Model. The motivation for using PCA is that we can fill in missing data and remove outliers given one image of person. If for some reason the image is very cluttered, we would still be able to &#8216;predict&#8217; how this person would look like, given all the faces we have used to train the PCA Model.</p>
+<p>For the PCA reconstruction method has a couple of prerequisites are required. First off, the PCA Model itself. For those who are familiar with PCA know that we need to have a flattened feature vector. Both the dimensions and the content of this feature vector may be arbitrary, but have to be exactly the same from subject to subject, (i.e., there can be no difference in the number of annotated landmarks or order, landmark 1 in subject A, is landmark 1 in subject B). In this case we use it for the shape and texture. The shape feature vector contains the following data:</p>
+<p><code class="docutils literal"><span class="pre">`</span>
+<span class="pre">[[x_1,</span> <span class="pre">y_1],</span> <span class="pre">[x_2,</span> <span class="pre">y_2],</span> <span class="pre">...,</span> <span class="pre">[x_n,</span> <span class="pre">y_n]]</span>&nbsp; <span class="pre">-&gt;</span> <span class="pre">(flattened)</span> <span class="pre">[x_1,</span> <span class="pre">y_1,</span> <span class="pre">x_2,</span> <span class="pre">y_2,</span> <span class="pre">x_n,</span> <span class="pre">y_n]</span>
+<span class="pre">`</span></code></p>
+<p>The x,y values are the location of landmarks in an image. Such a cluster of annotated locations in an image construct a shape we call Active Appearance Model(AAM)[1]. For a serie of annotated pictures with landmark location we can build mean AAM. For this particular implementation we started with supporting the Imm Dataset[^imm_dataset], for the simple reason that it is open for usage without any license agreement before hand (make sure we are correct about this). This is what we call the mean face, which is very important for the construction of the PCA Model, any PCA Model for that matter.</p>
+<p>The texture PCA data is somewhat more difficult and depends on a given shape. In our case this given shape is the mean AAM that we have built previously. We need to add extra information to this AAM mean shape, namely a unique set of triangles that can be constructed from the set of landmarks. For this we use the Delaunay algorithm which does exactly this. The triangles help us find corresponding pixels in shape A and B. This solves the problem of pixel correspondences and is important for constructing a mean texture for the reasons explained previously about how a feature vector should look like. Pixel 1 in triangle 1 in subject A needs to correspond to exactly the same pixel (relatively) to pixel 1 in triangle 1 in subject B. This of course is sensitive to noise, but the pixels in the nose region must correspond from subject to subject, this prevents that we reconstruct an eye with a nose for instance (Note: remove this last sentence in a serious text).</p>
+</div>
+<div class="section" id="references">
+<h1>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h1>
+<p>[1]: Cootes, T. F., Edwards, G. J., &amp; Taylor, C. J. (1998, June). Active appearance models. In European conference on computer vision (pp. 484-498). Springer Berlin Heidelberg.</p>
+</div>
+<div class="section" id="links">
+<h1>Links<a class="headerlink" href="#links" title="Permalink to this headline">¶</a></h1>
+<p>[^imm_dataset]: <a class="reference external" href="http://www.imm.dtu.dk/~aam/datasets/datasets.html">http://www.imm.dtu.dk/~aam/datasets/datasets.html</a> &#8220;Imm dataset&#8221;</p>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="datasets.html" class="btn btn-neutral float-right" title="Datasets" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Richard Torenvliet.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

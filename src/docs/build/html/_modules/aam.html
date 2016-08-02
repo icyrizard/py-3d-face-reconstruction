@@ -1,0 +1,479 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>aam &mdash; 3D Face Reconstruction 0.1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="3D Face Reconstruction 0.1 documentation" href="../index.html"/>
+        <link rel="up" title="Module code" href="index.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> 3D Face Reconstruction
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../datasets.html">Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../aam.html">AAM Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pca.html">PCA Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reconstruction/reconstruction.html">Reconstruction Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reconstruction/texture.html">Texture Module</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">3D Face Reconstruction</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="index.html">Module code</a> &raquo;</li>
+      
+    <li>aam</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for aam</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">.. module:: active_appearance_model</span>
+<span class="sd">   :platform: Unix, Windows</span>
+<span class="sd">   :synopsis: Contains the aam data format abstraction layer</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">matplotlib.tri</span> <span class="k">import</span> <span class="n">Triangulation</span>
+<span class="kn">import</span> <span class="nn">cv2</span>
+
+<span class="c1"># local imports</span>
+<span class="kn">import</span> <span class="nn">pca</span>
+<span class="kn">import</span> <span class="nn">reconstruction.texture</span> <span class="k">as</span> <span class="nn">tx</span>
+
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span>
+    <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span>
+    <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1"> </span><span class="si">%(levelname)s</span><span class="s1"> </span><span class="si">%(name)s</span><span class="s1">: </span><span class="si">%(message)s</span><span class="s1">&#39;</span>
+<span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="AAMPoints"><a class="viewcode-back" href="../aam.html#aam.AAMPoints">[docs]</a><span class="k">class</span> <span class="nc">AAMPoints</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Object to store AAM points / landmarks. Tries to keep the scaling of</span>
+<span class="sd">    these points transparent.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">normalized_flattened_points_list</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">points_list</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">actual_shape</span><span class="o">=</span><span class="p">()):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            normalized_flattened_points_list(ndarray): flattened list of points.</span>
+<span class="sd">                This means that if the points consist of x,y coordinates, then all this</span>
+<span class="sd">                list will be: [x1, y1, x2, y2, ... xi, yi]</span>
+<span class="sd">                points_list(ndarray): this list is the same points but then not</span>
+<span class="sd">            flattened, [[x1, y1], [x2, y2], ... [xi, yi]]. You either create</span>
+<span class="sd">                this object with this argument or the normalized_flattened_points_list</span>
+<span class="sd">            actual_shape(tuple): this is important if you want to reconstruct</span>
+<span class="sd">                the original list, see get_scaled_points() for usage.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">normalized_flattened_points_list</span> <span class="o">=</span> <span class="n">normalized_flattened_points_list</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">points_list</span> <span class="o">=</span> <span class="n">points_list</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">actual_shape</span> <span class="o">=</span> <span class="n">actual_shape</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bounding_box</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="AAMPoints.get_bounding_box"><a class="viewcode-back" href="../aam.html#aam.AAMPoints.get_bounding_box">[docs]</a>    <span class="k">def</span> <span class="nf">get_bounding_box</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the bounding box around the points.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            OpenCV rectangle:</span>
+<span class="sd">                x, y, w, h</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounding_box</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_bounding_box</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounding_box</span></div>
+
+<div class="viewcode-block" id="AAMPoints.get_scaled_points"><a class="viewcode-back" href="../aam.html#aam.AAMPoints.get_scaled_points">[docs]</a>    <span class="k">def</span> <span class="nf">get_scaled_points</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width_height_dimensions</span><span class="p">,</span> <span class="n">rescale</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Scale the normalized flattened points list to a scale given by &#39;shape&#39;.</span>
+<span class="sd">        The x and y values should be scaled to the width and height of the image.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            shape(tuple): (height, width)</span>
+<span class="sd">            rescal(boolean): flag if we should rescale or not because if we</span>
+<span class="sd">            already scaled, we are not going to do it again by</span>
+<span class="sd">            default.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ndarray scaled to &#39;shape&#39; width and height.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">points_list</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">rescale</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">points_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalized_flattened_points_list</span>
+
+            <span class="c1"># shape into [[x, y(, z)], [x, y, (,z)]]</span>
+            <span class="c1"># we use the &#39;actual_shape&#39; which is known from the creation of</span>
+            <span class="c1"># this object.</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actual_shape</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">points_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">points_list</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actual_shape</span><span class="p">)</span>
+
+            <span class="n">h</span> <span class="o">=</span> <span class="n">width_height_dimensions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">w</span> <span class="o">=</span> <span class="n">width_height_dimensions</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">points_list</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">points_list</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">w</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">points_list</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">points_list</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">h</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">points_list</span></div>
+
+<div class="viewcode-block" id="AAMPoints.calculate_bounding_box"><a class="viewcode-back" href="../aam.html#aam.AAMPoints.calculate_bounding_box">[docs]</a>    <span class="k">def</span> <span class="nf">calculate_bounding_box</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate bounding box in the **scaled** points list</span>
+<span class="sd">        The empasis on on scaled because the convexHull does not support</span>
+<span class="sd">        small values, the normalized_flattened_points_list does not work.</span>
+
+<span class="sd">        Use get_scaled_points first, with a shape that is needed. The shape</span>
+<span class="sd">        should be the dimensions of the out image, example (480, 640), ie., (height,</span>
+<span class="sd">        width)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">points_list</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> \
+            <span class="s1">&#39;the list points already need to be scaled order to correctly work,</span><span class="se">\</span>
+<span class="s1">            this requires that get_scaled_points is executed first.&#39;</span>
+
+        <span class="n">hull</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">convexHull</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">points_list</span><span class="p">,</span> <span class="n">returnPoints</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cv2</span><span class="o">.</span><span class="n">boundingRect</span><span class="p">(</span><span class="n">hull</span><span class="p">)</span></div>
+
+    <span class="c1"># TODO: impove by not using opencv but just min-max of the lists</span>
+    <span class="k">def</span> <span class="nf">get_bounding_box_2</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+        <span class="c1">#hull = cv2.convexHull(self.points_list, returnPoints=True)</span>
+        <span class="c1">#x, y, w_slice, h_slice = cv2.boundingRect(hull)</span>
+
+        <span class="c1">#return cv2.boundingRect()</span>
+
+<div class="viewcode-block" id="get_mean"><a class="viewcode-back" href="../aam.html#aam.get_mean">[docs]</a><span class="k">def</span> <span class="nf">get_mean</span><span class="p">(</span><span class="n">vector</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Construct a mean from a matrix of x,y values</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        points(numpy array) that follows the following structure:</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        mean_values (numpy array)</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        Input observations:</span>
+<span class="sd">            0. [[x_0_0, y_0_0], ... , [x_0_m, y_0_m]],</span>
+<span class="sd">            1. [[x_1_0, y_1_0], ... , [x_1_m, y_1_m]],</span>
+<span class="sd">            2. [[x_2_0, y_2_0], ... , [x_2_m, y_2_m]],</span>
+<span class="sd">            3. [[x_3_0, y_3_0], ... , [x_3_m, y_3_m]]</span>
+
+<span class="sd">                ....           ....       .....</span>
+
+<span class="sd">            n. [[x_4_0, y_4_0], ... , [x_n_m, y_n_m]]</span>
+
+<span class="sd">        This vector containts the mean values of the corresponding column, like so:</span>
+<span class="sd">            0. [[x_0_0, y_0_0], ... , [x_0_k, y_0_k]],</span>
+<span class="sd">            1. [[x_1_0, y_1_0], ... , [x_1_k, y_1_k]],</span>
+<span class="sd">            2. [[x_2_0, y_2_0], ... , [x_2_k, y_2_k]],</span>
+<span class="sd">            3. [[x_3_0, y_3_0], ... , [x_3_k, y_3_k]]</span>
+
+<span class="sd">                ....           ....       .....</span>
+
+<span class="sd">            n. [[x_4_0, y_4_0], ... , [x_n_k, y_n_k]]</span>
+
+<span class="sd">            mean. [[x_mean_0, y_mean_0], ... [x_mean_n, y_mean_n]]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">vector</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_triangles"><a class="viewcode-back" href="../aam.html#aam.get_triangles">[docs]</a><span class="k">def</span> <span class="nf">get_triangles</span><span class="p">(</span><span class="n">x_vector</span><span class="p">,</span> <span class="n">y_vector</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Perform triangulation between two 2d vectors</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x_vector(ndarray): list of x locations</span>
+<span class="sd">        y_vector(ndarray): list of y locations</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">Triangulation</span><span class="p">(</span><span class="n">x_vector</span><span class="p">,</span> <span class="n">y_vector</span><span class="p">)</span><span class="o">.</span><span class="n">triangles</span></div>
+
+
+<div class="viewcode-block" id="build_shape_feature_vectors"><a class="viewcode-back" href="../aam.html#aam.build_shape_feature_vectors">[docs]</a><span class="k">def</span> <span class="nf">build_shape_feature_vectors</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="n">get_points</span><span class="p">,</span> <span class="n">flattened</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gets the aam points from the files and appends them seperately to one</span>
+<span class="sd">    array.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        files (list): list files</span>
+<span class="sd">        get_points(function): function that gets the points/landmarks given</span>
+<span class="sd">        a list of files.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list. List of feature vectors</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">points</span> <span class="o">=</span> <span class="n">get_points</span><span class="p">(</span><span class="n">files</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">flattened</span><span class="p">:</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">flatten_feature_vectors</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">points</span></div>
+
+
+<div class="viewcode-block" id="sample_from_triangles"><a class="viewcode-back" href="../aam.html#aam.sample_from_triangles">[docs]</a><span class="k">def</span> <span class="nf">sample_from_triangles</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">points2d_src</span><span class="p">,</span> <span class="n">points2d_dst</span><span class="p">,</span> <span class="n">triangles</span><span class="p">,</span> <span class="n">dst</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get pixels from within the  triangles [[p1, p2, p3]_0, .. [p1, p2, p3]_n].</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        src(ndarray, dtype=uint8): input image</span>
+
+<span class="sd">        points2d_src(ndarray, dtype=np.int32): shape array [[x, y], ... [x, y]]</span>
+
+<span class="sd">        points2d_dst(ndarray, dtype=np.int32): shape array [[x, y], ... [x, y]]</span>
+
+<span class="sd">        triangles(ndarray, ndim=3, dtype=np.int32): shape array [[p1, p2, p3]_0, .. [p1, p2, p3]_n].</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">tri</span> <span class="ow">in</span> <span class="n">triangles</span><span class="p">:</span>
+        <span class="n">src_p1</span><span class="p">,</span> <span class="n">src_p2</span><span class="p">,</span> <span class="n">src_p3</span> <span class="o">=</span> <span class="n">points2d_src</span><span class="p">[</span><span class="n">tri</span><span class="p">]</span>
+        <span class="n">dst_p1</span><span class="p">,</span> <span class="n">dst_p2</span><span class="p">,</span> <span class="n">dst_p3</span> <span class="o">=</span> <span class="n">points2d_dst</span><span class="p">[</span><span class="n">tri</span><span class="p">]</span>
+
+        <span class="n">tx</span><span class="o">.</span><span class="n">fill_triangle_src_dst</span><span class="p">(</span>
+            <span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span>
+            <span class="n">src_p1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">src_p1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">src_p2</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">src_p2</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">src_p3</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">src_p3</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">dst_p1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dst_p1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">dst_p2</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dst_p2</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">dst_p3</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dst_p3</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="build_texture_feature_vectors"><a class="viewcode-back" href="../aam.html#aam.build_texture_feature_vectors">[docs]</a><span class="k">def</span> <span class="nf">build_texture_feature_vectors</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="n">get_image_with_points</span><span class="p">,</span> <span class="n">mean_points</span><span class="p">,</span> <span class="n">triangles</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Args:</span>
+<span class="sd">        files (list): list files</span>
+<span class="sd">        get_image_with_points (function): That can return the image together</span>
+<span class="sd">        with the location.</span>
+<span class="sd">        mean_points(AAMPoints): AAMPoints object</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list: list of feature vectors</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mean_texture</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">image</span><span class="p">,</span> <span class="n">points</span> <span class="o">=</span> <span class="n">get_image_with_points</span><span class="p">(</span><span class="n">files</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">mean_points</span><span class="o">.</span><span class="n">get_scaled_points</span><span class="p">(</span><span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="c1"># improve this, see issue #1</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w_slice</span><span class="p">,</span> <span class="n">h_slice</span> <span class="o">=</span> <span class="n">mean_points</span><span class="o">.</span><span class="n">get_bounding_box</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">files</span><span class="p">):</span>
+        <span class="n">image</span><span class="p">,</span> <span class="n">points</span> <span class="o">=</span> <span class="n">get_image_with_points</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+        <span class="n">Points</span> <span class="o">=</span> <span class="n">AAMPoints</span><span class="p">(</span>
+            <span class="n">normalized_flattened_points_list</span><span class="o">=</span><span class="n">points</span><span class="p">,</span>
+            <span class="n">actual_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">58</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># empty colored image</span>
+        <span class="n">dst</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">3</span><span class="p">),</span> <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+
+        <span class="n">sample_from_triangles</span><span class="p">(</span>
+            <span class="n">image</span><span class="p">,</span>
+            <span class="n">Points</span><span class="o">.</span><span class="n">get_scaled_points</span><span class="p">(</span><span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span>
+            <span class="n">mean_points</span><span class="o">.</span><span class="n">get_scaled_points</span><span class="p">(</span><span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span>
+            <span class="n">triangles</span><span class="p">,</span>
+            <span class="n">dst</span>
+        <span class="p">)</span>
+
+        <span class="n">dst_flattened</span> <span class="o">=</span> <span class="n">dst</span><span class="p">[</span><span class="n">y</span><span class="p">:</span> <span class="n">y</span> <span class="o">+</span> <span class="n">h_slice</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">+</span> <span class="n">w_slice</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">mean_texture</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dst_flattened</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;processed file: </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">/</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">files</span><span class="p">)))</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mean_texture</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_pixel_values"><a class="viewcode-back" href="../aam.html#aam.get_pixel_values">[docs]</a><span class="k">def</span> <span class="nf">get_pixel_values</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">points</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; deprecated &quot;&quot;&quot;</span>
+    <span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">w</span>
+    <span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">h</span>
+
+    <span class="n">image</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">blur</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+
+    <span class="n">hull</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">convexHull</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">returnPoints</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">rect</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">boundingRect</span><span class="p">(</span><span class="n">hull</span><span class="p">)</span>
+
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">rect</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">150</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">150</span><span class="p">):</span>
+            <span class="n">y_loc_g</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">i</span> <span class="o">*</span> <span class="n">h</span> <span class="o">+</span> <span class="n">y</span><span class="p">)</span>
+            <span class="n">x_loc_g</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">j</span> <span class="o">*</span> <span class="n">w</span> <span class="o">+</span> <span class="n">x</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">cv2</span><span class="o">.</span><span class="n">pointPolygonTest</span><span class="p">(</span><span class="n">hull</span><span class="p">,</span> <span class="p">(</span><span class="n">x_loc_g</span><span class="p">,</span> <span class="n">y_loc_g</span><span class="p">),</span> <span class="n">measureDist</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">image</span><span class="p">[</span><span class="n">y_loc_g</span><span class="p">][</span><span class="n">x_loc_g</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">image</span><span class="p">[</span><span class="n">y_loc_g</span><span class="p">][</span><span class="n">x_loc_g</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">image</span><span class="p">[</span><span class="n">y_loc_g</span><span class="p">][</span><span class="n">x_loc_g</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="c1"># return np.asarray(pixels, dtype=np.uint8), hull</span>
+    <span class="k">return</span> <span class="n">image</span><span class="p">,</span> <span class="n">hull</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Richard Torenvliet.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

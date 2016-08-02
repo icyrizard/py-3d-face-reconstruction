@@ -2,14 +2,94 @@ import numpy as np
 
 
 class PcaModel:
-    """Abstraction for a pca model"""
-    def __init__(self, model_file):
+    """
+    Abstraction for a pca model file. The pca model is stored in a numpy file
+    using numpy.save. The following information is stored:
+
         Vtm = np.load(model_file)
         self.Vt = Vtm[0]
         self.s = Vtm[1]
         self.n_components = Vtm[2]
         self.mean_values = Vtm[3][0]
         self.triangles = Vtm[4]
+
+
+    Examples:
+        pca = PcaModel(path_to_numpy_model_file)
+    """
+    def __init__(self, filename=None):
+        self.filename = filename
+
+        if filename:
+            self.load()
+
+    def save(self):
+        """
+        Store the information inside this PCA Model instance in a numpy file.
+
+        Args:
+            Vt (numpy ndarray): Two dimensional array with dimensions
+            s (numpy ndarray): The singular values as a one dimensional array
+            n_components: number of components needed to cover .90 percent of the
+            variance
+
+        Examples:
+            It is stored in the following way:
+                np.load(filename, np.assary([Vt, [mean_values]])
+
+            And accessed by:
+                Vtm = np.load(args.model_file)
+
+                Vt = Vtm[0]
+                mean_values = Vtm[1][0]
+                triangles = Vtm[2]
+
+        """
+        assert hasattr(self, 'Vt')
+        assert hasattr(self, 's')
+        assert hasattr(self, 'n_components')
+        assert hasattr(self, 'mean_values')
+        assert hasattr(self, 'triangles')
+
+        saving = np.asarray(
+            [
+                self.Vt,
+                self.s,
+                self.n_components,
+                [self.mean_values],
+                self.triangles
+            ]
+        )
+
+        np.save(self.filename, saving)
+
+    def load(self):
+        """
+        Loads the numpy file, see PcaModel whichs uses this function to load
+        the PCA Model data.
+
+        Returns:
+            (tuple): Vt, s, n_components, mean_values and triangles
+            Vt (numpy ndarray): Two dimensional array with dimensions
+            (n_features, n_features)
+            n_components: number of components needed to cover .90 percent of the
+            variance
+            mean_values (numpy ndarray): mean values of the features of the model,
+            this should have dimensions (n_featurs, )
+            triangles: a list of lists of indices that form a triangles in the
+            AAM list.
+
+        Examples:
+            We would advise not to use this function directly but to use the
+            PcaModel. See the :class:`PcaModel`
+
+        """
+        pca_model = np.load(self.filename)
+        self.Vt = pca_model[0]
+        self.s = pca_model[1]
+        self.n_components = pca_model[2]
+        self.mean_values = pca_model[3][0]
+        self.triangles = pca_model[4]
 
 
 def pca(data, mean_values, variance_percentage=90):
@@ -51,7 +131,9 @@ def reconstruct(feature_vector, Vt, mean_values, n_components=None):
         (n_features, n_features)
         mean_values (numpy ndarray): mean values of the features of the model,
         this should have dimensions (n_features, )
+
     """
+
     if n_components is None:
         n_components = Vt.shape[1]
 
@@ -63,60 +145,40 @@ def reconstruct(feature_vector, Vt, mean_values, n_components=None):
 
 def save(Vt, s, n_components, mean_values, triangles, filename):
     """
-    Store the U, s, Vt and mean of all the asf datafiles given by the asf
-    files.
+    Store the necessary information for a PCA Model in a numpy file.
 
-    It is stored in the following way:
-        np.load(filename, np.assary([Vt, [mean_values]])
+    Args:
+        Vt (numpy ndarray): Two dimensional array with dimensions
+        s (numpy ndarray): The singular values as a one dimensional array
+        n_components: number of components needed to cover .90 percent of the
+        variance
 
-    And accessed by:
-        Vtm = np.load(args.model_file)
+    Examples:
+        It is stored in the following way:
+            np.load(filename, np.assary([Vt, [mean_values]])
 
-        Vt = Vtm[0]
-        mean_values = Vtm[1][0]
-        triangles = Vtm[2]
+        And accessed by:
+            Vtm = np.load(args.model_file)
+
+            Vt = Vtm[0]
+            mean_values = Vtm[1][0]
+            triangles = Vtm[2]
 
     """
     saving = np.asarray([Vt, s, n_components, [mean_values], triangles])
     np.save(filename, saving)
 
 
-def load(filename):
-    """
-    The model stored by pca.store (see ``pca.store`` method above) is loaded as:
-        UsVtm = np.load(args.model_file)
-
-        Vt = Vtm[0]
-        mean_values = Vtm[1][0]
-
-        Returns:
-           (tuple): Vt, mean_values
-
-            Vt (numpy ndarray): Two dimensional array with dimensions
-            (n_features, n_features)
-            mean_values (numpy ndarray): mean values of the features of the model,
-            this should have dimensions (n_featurs, )
-    """
-    # load the stored model file
-    Vtm = np.load(filename)
-
-    Vt = Vtm[0]
-    s = Vtm[1]
-    n_components = Vtm[2]
-    mean_values = Vtm[3][0]
-    triangles = Vtm[4]
-
-    return Vt, s, n_components, mean_values, triangles
-
-
-#def load_model(filename):
-#    # load the stored model file
-#    return PcaModel(filename)
-
-
 def flatten_feature_vectors(data, dim=0):
     """
     Flattens the feature vectors inside a ndarray
+
+    Args:
+        data (numpy array): array of feature vectors
+        dim (int): dimension to flatten the data
+
+    Returns:
+        array:(numpy array): array flattened feature vectors
 
     Example:
         input:
@@ -131,13 +193,6 @@ def flatten_feature_vectors(data, dim=0):
             ...
             [1, 2, 3, 4, 5, 6]
         ]
-
-    Args:
-        data (numpy array): array of feature vectors
-        dim (int): dimension to flatten the data
-
-    return:
-        array: (numpy array): array flattened feature vectors
 
     """
     flattened = []

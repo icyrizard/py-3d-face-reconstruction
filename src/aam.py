@@ -1,3 +1,10 @@
+"""
+.. module:: active_appearance_model
+   :platform: Unix, Windows
+   :synopsis: Contains the aam data format abstraction layer
+
+"""
+
 import logging
 import numpy as np
 from matplotlib.tri import Triangulation
@@ -26,8 +33,8 @@ class AAMPoints():
             normalized_flattened_points_list(ndarray): flattened list of points.
                 This means that if the points consist of x,y coordinates, then all this
                 list will be: [x1, y1, x2, y2, ... xi, yi]
-            points_list(ndarray): this list is the same points but then not
-                flattened, [[x1, y1], [x2, y2], ... [xi, yi]]. You either create
+                points_list(ndarray): this list is the same points but then not
+            flattened, [[x1, y1], [x2, y2], ... [xi, yi]]. You either create
                 this object with this argument or the normalized_flattened_points_list
             actual_shape(tuple): this is important if you want to reconstruct
                 the original list, see get_scaled_points() for usage.
@@ -55,11 +62,13 @@ class AAMPoints():
         """
         Scale the normalized flattened points list to a scale given by 'shape'.
         The x and y values should be scaled to the width and height of the image.
+
         Args:
             shape(tuple): (height, width)
-            rescal(boolean): flag if we should rescale or not because if we
-                already scaled, we are not going to do it again by
-                default.
+            rescale(boolean): flag if we should rescale or not because if we
+            already scaled, we are not going to do it again by
+            default.
+
         Returns:
             ndarray scaled to 'shape' width and height.
         """
@@ -106,14 +115,16 @@ class AAMPoints():
         #return cv2.boundingRect()
 
 def get_mean(vector):
-    """ construct a mean from a matrix of x,y values
+    """
+    Construct a mean from a matrix of x,y values
+
     Args:
         points(numpy array) that follows the following structure:
 
     Returns:
         mean_values (numpy array)
 
-    Examples:
+    Example:
         Input observations:
             0. [[x_0_0, y_0_0], ... , [x_0_m, y_0_m]],
             1. [[x_1_0, y_1_0], ... , [x_1_m, y_1_m]],
@@ -140,7 +151,13 @@ def get_mean(vector):
 
 
 def get_triangles(x_vector, y_vector):
-    """ perform triangulation between two 2d vectors"""
+    """
+    Perform triangulation between two 2d vectors
+
+    Args:
+        x_vector(ndarray): list of x locations
+        y_vector(ndarray): list of y locations
+    """
     return Triangulation(x_vector, y_vector).triangles
 
 
@@ -151,9 +168,11 @@ def build_shape_feature_vectors(files, get_points, flattened=False):
 
     Args:
         files (list): list files
+        get_points(function): function that gets the points/landmarks given
+        a list of files.
 
-    return:
-        list: list of feature vectors
+    Returns:
+        list. List of feature vectors
     """
     points = get_points(files)
 
@@ -166,10 +185,14 @@ def build_shape_feature_vectors(files, get_points, flattened=False):
 def sample_from_triangles(src, points2d_src, points2d_dst, triangles, dst):
     """
     Get pixels from within the  triangles [[p1, p2, p3]_0, .. [p1, p2, p3]_n].
+
     Args:
         src(ndarray, dtype=uint8): input image
+
         points2d_src(ndarray, dtype=np.int32): shape array [[x, y], ... [x, y]]
+
         points2d_dst(ndarray, dtype=np.int32): shape array [[x, y], ... [x, y]]
+
         triangles(ndarray, ndim=3, dtype=np.int32): shape array [[p1, p2, p3]_0, .. [p1, p2, p3]_n].
 
     """
@@ -193,7 +216,7 @@ def build_texture_feature_vectors(files, get_image_with_points, mean_points, tri
     Args:
         files (list): list files
         get_image_with_points (function): That can return the image together
-            with the location.
+        with the location.
         mean_points(AAMPoints): AAMPoints object
 
     Returns:
@@ -233,7 +256,7 @@ def build_texture_feature_vectors(files, get_image_with_points, mean_points, tri
 
 
 def get_pixel_values(image, points):
-    """ docstring """
+    """ deprecated """
     h, w, c = image.shape
 
     points[:, 0] = points[:, 0] * w

@@ -143,6 +143,7 @@ app = web.Application([
     (r'/reconstruction[\/0-9]?', ImageWebSocketHandler),
     (r'/api/v1/faces[\/0-9]?', FaceHandler),
     (r'/data/(.*)', web.StaticFileHandler, {'path': '../data'}),
+    (r'/docs/(.*)', web.StaticFileHandler, {'path': 'docs/build/html'}),
 ])
 
 

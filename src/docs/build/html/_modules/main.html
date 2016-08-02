@@ -1,0 +1,539 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>main &mdash; 3D Face Reconstruction 0.1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="3D Face Reconstruction 0.1 documentation" href="../index.html"/>
+        <link rel="up" title="Module code" href="index.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> 3D Face Reconstruction
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <p class="caption"><span class="caption-text">Table of Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../datasets.html">Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../aam.html">AAM Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pca.html">PCA Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reconstruction/reconstruction.html">Reconstruction Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reconstruction/texture.html">Texture Module</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">3D Face Reconstruction</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="index.html">Module code</a> &raquo;</li>
+      
+    <li>main</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for main</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/local/bin/python</span>
+<span class="c1"># python std</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">importlib</span>
+
+<span class="c1"># installed packages</span>
+<span class="kn">import</span> <span class="nn">cv2</span>
+
+<span class="c1"># local imports</span>
+<span class="kn">import</span> <span class="nn">pca</span>
+<span class="kn">import</span> <span class="nn">aam</span>
+<span class="c1"># import imm</span>
+
+<span class="kn">from</span> <span class="nn">reconstruction</span> <span class="k">import</span> <span class="n">reconstruction</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span>
+                    <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1"> </span><span class="si">%(levelname)s</span><span class="s1"> </span><span class="si">%(name)s</span><span class="s1">: </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">add_parser_options</span><span class="p">():</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;IMMPoints tool&#39;</span><span class="p">)</span>
+    <span class="n">pca_group</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_argument_group</span><span class="p">(</span><span class="s1">&#39;show_pca&#39;</span><span class="p">)</span>
+
+    <span class="n">pca_group</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;--reconstruct&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Reconstruct one face with a given pca model&#39;</span>
+    <span class="p">)</span>
+
+    <span class="n">pca_group</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;--show_kivy&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Reconstruct using kivy as a GUI&#39;</span>
+    <span class="p">)</span>
+
+    <span class="n">pca_group</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;--generate_call_graph&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Generate call graph from the reconstruction&#39;</span>
+    <span class="p">)</span>
+
+    <span class="n">pca_group</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;--save_pca_shape&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;save the pca shape model&#39;</span>
+    <span class="p">)</span>
+
+    <span class="n">pca_group</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;--save_pca_texture&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;save the pca texture model&#39;</span>
+    <span class="p">)</span>
+
+    <span class="n">pca_group</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;--show_pca&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Show and manipulate the saved PCA model&#39;</span>
+    <span class="p">)</span>
+
+    <span class="n">pca_group</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;--files&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;files to process&#39;</span>
+    <span class="p">)</span>
+
+    <span class="n">pca_group</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;--n_components&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;number of principle components to keep and are able to manipulate&#39;</span>
+    <span class="p">)</span>
+
+    <span class="n">pca_group</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;--model_shape_file&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;pca model file that contains or is going to contain the pca shape model&#39;</span>
+    <span class="p">)</span>
+
+    <span class="n">pca_group</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;--shape_type&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;imm&#39;</span><span class="p">],</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;type of shape, annotated dataset&#39;</span>
+    <span class="p">)</span>
+
+    <span class="n">pca_group</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;--model_texture_file&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s1">&#39;pca model file that contains or is going to contain the pca texture model&#39;</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">parser</span>
+
+
+<div class="viewcode-block" id="import_dataset_module"><a class="viewcode-back" href="../index.html#main.import_dataset_module">[docs]</a><span class="k">def</span> <span class="nf">import_dataset_module</span><span class="p">(</span><span class="n">shape_type</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Includes the right implementation for the right dataset implementation for</span>
+<span class="sd">    the given shape type, see --help for the available options.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        shape_type(string): Name of the python file inside the</span>
+<span class="sd">        `src/datasets` folder.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="s1">&#39;datasets.</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">shape_type</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="save_pca_model_texture"><a class="viewcode-back" href="../index.html#main.save_pca_model_texture">[docs]</a><span class="k">def</span> <span class="nf">save_pca_model_texture</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    save the U, s, Vt and mean of all the asf datafiles given by the asf</span>
+<span class="sd">    files.</span>
+
+<span class="sd">    It is saved in the following way:</span>
+
+<span class="sd">        np.load(filename, np.assary([Vt, mean_values])</span>
+
+<span class="sd">        And accessed by:</span>
+
+<span class="sd">        Vtm = np.load(args.model_file_texture)</span>
+
+<span class="sd">        Vt = Vtm[0]</span>
+<span class="sd">        mean_values = Vtm[1][0]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">files</span><span class="p">,</span> <span class="s1">&#39;--files should be given&#39;</span>
+    <span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">model_shape_file</span><span class="p">,</span> <span class="s1">&#39;--model_texture_file needs to be provided to save the pca model&#39;</span>
+    <span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">shape_type</span><span class="p">,</span> <span class="s1">&#39;--shape_type the type of dataset, see datasets module&#39;</span>
+
+    <span class="n">dataset_module</span> <span class="o">=</span> <span class="n">import_dataset_module</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">shape_type</span><span class="p">)</span>
+
+    <span class="n">shape_model</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">PcaModel</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">model_shape_file</span><span class="p">)</span>
+
+    <span class="n">mean_points</span> <span class="o">=</span> <span class="n">dataset_module</span><span class="o">.</span><span class="n">IMMPoints</span><span class="p">(</span><span class="n">points_list</span><span class="o">=</span><span class="n">shape_model</span><span class="o">.</span><span class="n">mean_values</span><span class="p">)</span>
+
+    <span class="n">textures</span> <span class="o">=</span> <span class="n">aam</span><span class="o">.</span><span class="n">build_texture_feature_vectors</span><span class="p">(</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">files</span><span class="p">,</span>
+        <span class="n">dataset_module</span><span class="o">.</span><span class="n">get_imm_image_with_landmarks</span><span class="p">,</span>  <span class="c1"># function</span>
+        <span class="n">mean_points</span><span class="p">,</span>
+        <span class="n">shape_model</span><span class="o">.</span><span class="n">triangles</span>
+    <span class="p">)</span>
+
+    <span class="n">mean_texture</span> <span class="o">=</span> <span class="n">aam</span><span class="o">.</span><span class="n">get_mean</span><span class="p">(</span><span class="n">textures</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">Vt</span><span class="p">,</span> <span class="n">n_components</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">pca</span><span class="p">(</span><span class="n">textures</span><span class="p">,</span> <span class="n">mean_texture</span><span class="p">)</span>
+
+    <span class="n">pca</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">Vt</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">n_components</span><span class="p">,</span> <span class="n">mean_texture</span><span class="p">,</span> <span class="n">shape_model</span><span class="o">.</span><span class="n">triangles</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">model_texture_file</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;texture pca model saved in </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">model_texture_file</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="save_pca_model_shape"><a class="viewcode-back" href="../index.html#main.save_pca_model_shape">[docs]</a><span class="k">def</span> <span class="nf">save_pca_model_shape</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    save the U, s, Vt and mean of all the asf datafiles given by the asf</span>
+<span class="sd">    files.</span>
+
+<span class="sd">    It is saved in the following way:</span>
+
+<span class="sd">        np.load(filename, np.assary([Vt, mean_values])</span>
+
+<span class="sd">        And accessed by:</span>
+
+<span class="sd">        Vtm = np.load(args.model_shape_file)</span>
+
+<span class="sd">        Vt = Vtm[0]</span>
+<span class="sd">        mean_values = Vtm[1][0]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">files</span><span class="p">,</span> <span class="s1">&#39;--files should be given&#39;</span>
+    <span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">model_shape_file</span><span class="p">,</span> <span class="s1">&#39;--model_shape_file needs to be provided to save the pca model&#39;</span>
+    <span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">shape_type</span><span class="p">,</span> <span class="s1">&#39;--shape_type the type of dataset, see datasets module&#39;</span>
+
+    <span class="n">dataset_module</span> <span class="o">=</span> <span class="n">import_dataset_module</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">shape_type</span><span class="p">)</span>
+
+    <span class="n">points</span> <span class="o">=</span> <span class="n">aam</span><span class="o">.</span><span class="n">build_shape_feature_vectors</span><span class="p">(</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">files</span><span class="p">,</span> <span class="n">dataset_module</span><span class="o">.</span><span class="n">get_imm_points</span><span class="p">,</span> <span class="n">flattened</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+
+    <span class="n">mean_values</span> <span class="o">=</span> <span class="n">aam</span><span class="o">.</span><span class="n">get_mean</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+
+    <span class="n">_</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">Vt</span><span class="p">,</span> <span class="n">n_components</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">pca</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">mean_values</span><span class="p">)</span>
+
+    <span class="n">mean_xy</span> <span class="o">=</span> <span class="n">mean_values</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">triangles</span> <span class="o">=</span> <span class="n">aam</span><span class="o">.</span><span class="n">get_triangles</span><span class="p">(</span><span class="n">mean_xy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">mean_xy</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+
+    <span class="n">pca</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">Vt</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">n_components</span><span class="p">,</span> <span class="n">mean_values</span><span class="p">,</span> <span class="n">triangles</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">model_shape_file</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;shape pca model saved in </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">model_shape_file</span> <span class="o">+</span> <span class="s1">&#39;_shape&#39;</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">reconstruct_with_model</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">files</span><span class="p">,</span> <span class="s1">&#39;--files should be given to allow the image to be shown&#39;</span>
+    <span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">model_shape_file</span><span class="p">,</span> <span class="s1">&#39;--model_shape_file needs to be provided to get the pca model&#39;</span>
+    <span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">shape_type</span><span class="p">,</span> <span class="s1">&#39;--shape_type the type of dataset, see datasets module&#39;</span>
+
+    <span class="n">dataset_module</span> <span class="o">=</span> <span class="n">import_dataset_module</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">shape_type</span><span class="p">)</span>
+
+    <span class="c1"># clear sys args. arguments are conflicting with parseargs</span>
+    <span class="c1"># kivy will parse args upon import and will crash if it finds our</span>
+    <span class="c1"># &#39;unsupported by kivy&#39; arguments.</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="kn">from</span> <span class="nn">view.reconstruct</span> <span class="k">import</span> <span class="n">ReconstructApp</span>
+
+    <span class="n">Vt_shape</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">n_shape_components</span><span class="p">,</span> <span class="n">mean_value_points</span><span class="p">,</span> <span class="n">triangles</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">model_shape_file</span><span class="p">)</span>
+    <span class="n">Vt_texture</span><span class="p">,</span> <span class="n">s_texture</span><span class="p">,</span> <span class="n">n_texture_components</span><span class="p">,</span> <span class="n">mean_values_texture</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">model_texture_file</span><span class="p">)</span>
+
+    <span class="n">app</span> <span class="o">=</span> <span class="n">ReconstructApp</span><span class="p">()</span>
+
+    <span class="n">app</span><span class="o">.</span><span class="n">set_values</span><span class="p">(</span>
+        <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+        <span class="n">eigenv_shape</span><span class="o">=</span><span class="n">Vt_shape</span><span class="p">,</span>
+        <span class="n">eigenv_texture</span><span class="o">=</span><span class="n">Vt_texture</span><span class="p">,</span>
+        <span class="n">mean_value_points</span><span class="o">=</span><span class="n">mean_value_points</span><span class="p">,</span>
+        <span class="n">n_shape_components</span><span class="o">=</span><span class="n">n_shape_components</span><span class="p">,</span>
+        <span class="n">mean_values_texture</span><span class="o">=</span><span class="n">mean_values_texture</span><span class="p">,</span>
+        <span class="n">n_texture_components</span><span class="o">=</span><span class="n">n_texture_components</span><span class="p">,</span>
+        <span class="n">triangles</span><span class="o">=</span><span class="n">triangles</span>
+    <span class="p">)</span>
+
+    <span class="n">app</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">show_pca_model</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">model_shape_file</span><span class="p">,</span> <span class="s1">&#39;--model_texture_file needs to be provided to save the pca model&#39;</span>
+    <span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">model_texture_file</span><span class="p">,</span> <span class="s1">&#39;--model_texture_file needs to be provided to save the pca model&#39;</span>
+    <span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">shape_type</span><span class="p">,</span> <span class="s1">&#39;--shape_type the type of dataset, see datasets module&#39;</span>
+
+    <span class="n">dataset_module</span> <span class="o">=</span> <span class="n">import_dataset_module</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">shape_type</span><span class="p">)</span>
+
+    <span class="kn">from</span> <span class="nn">reconstruction.triangles</span> <span class="k">import</span> <span class="n">draw_shape</span><span class="p">,</span> <span class="n">get_texture</span>
+
+    <span class="n">Vt_shape</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">n_shape_components</span><span class="p">,</span> <span class="n">mean_value_points</span><span class="p">,</span> <span class="n">triangles</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">model_shape_file</span><span class="p">)</span>
+    <span class="n">Vt_texture</span><span class="p">,</span> <span class="n">s_texture</span><span class="p">,</span> <span class="n">n_texture_components</span><span class="p">,</span> <span class="n">mean_values_texture</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">model_texture_file</span><span class="p">)</span>
+
+    <span class="n">imm_points</span> <span class="o">=</span> <span class="n">dataset_module</span><span class="o">.</span><span class="n">IMMPoints</span><span class="p">(</span>
+        <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;data/imm_face_db/40-1m.asf&#39;</span>
+    <span class="p">)</span>
+    <span class="n">input_image</span> <span class="o">=</span> <span class="n">imm_points</span><span class="o">.</span><span class="n">get_image</span><span class="p">()</span>
+    <span class="n">input_points</span> <span class="o">=</span> <span class="n">imm_points</span><span class="o">.</span><span class="n">get_points</span><span class="p">()</span>
+    <span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">input_image</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="n">input_points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">input_points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">w</span>
+    <span class="n">input_points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">input_points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">h</span>
+
+    <span class="n">mean_value_points</span> <span class="o">=</span> <span class="n">mean_value_points</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">58</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">mean_value_points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">mean_value_points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">w</span>
+    <span class="n">mean_value_points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">mean_value_points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">h</span>
+
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">dst</span> <span class="o">=</span> <span class="n">get_texture</span><span class="p">(</span><span class="n">mean_value_points</span><span class="p">,</span> <span class="n">mean_values_texture</span><span class="p">)</span>
+
+        <span class="n">cv2</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="s1">&#39;input_image&#39;</span><span class="p">,</span> <span class="n">input_image</span><span class="p">)</span>
+        <span class="n">cv2</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="s1">&#39;image&#39;</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">waitKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xFF</span>
+
+        <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="mi">27</span><span class="p">:</span>
+            <span class="k">break</span>
+
+    <span class="n">cv2</span><span class="o">.</span><span class="n">destroyAllWindows</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="generate_call_graph"><a class="viewcode-back" href="../index.html#main.generate_call_graph">[docs]</a><span class="k">def</span> <span class="nf">generate_call_graph</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Performance debug function, will be (re)moved later. &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">model_shape_file</span><span class="p">,</span> <span class="s1">&#39;--model_texture_file needs to be provided to save the pca model&#39;</span>
+    <span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">model_texture_file</span><span class="p">,</span> <span class="s1">&#39;--model_texture_file needs to be provided to save the pca model&#39;</span>
+    <span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">shape_type</span><span class="p">,</span> <span class="s1">&#39;--shape_type the type of dataset, see datasets module&#39;</span>
+
+    <span class="n">dataset_module</span> <span class="o">=</span> <span class="n">import_dataset_module</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">shape_type</span><span class="p">)</span>
+
+    <span class="kn">from</span> <span class="nn">pycallgraph</span> <span class="k">import</span> <span class="n">PyCallGraph</span>
+    <span class="kn">from</span> <span class="nn">pycallgraph.output</span> <span class="k">import</span> <span class="n">GraphvizOutput</span>
+
+    <span class="n">graphviz</span> <span class="o">=</span> <span class="n">GraphvizOutput</span><span class="p">(</span><span class="n">output_file</span><span class="o">=</span><span class="s1">&#39;filter_none.png&#39;</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">PyCallGraph</span><span class="p">(</span><span class="n">output</span><span class="o">=</span><span class="n">graphviz</span><span class="p">):</span>
+        <span class="n">shape_model</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">PcaModel</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">model_shape_file</span><span class="p">)</span>
+        <span class="n">texture_model</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">PcaModel</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">model_texture_file</span><span class="p">)</span>
+
+        <span class="n">input_points</span> <span class="o">=</span> <span class="n">dataset_module</span><span class="o">.</span><span class="n">IMMPoints</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s1">&#39;data/imm_face_db/40-3m.asf&#39;</span><span class="p">)</span>
+        <span class="n">input_image</span> <span class="o">=</span> <span class="n">input_points</span><span class="o">.</span><span class="n">get_image</span><span class="p">()</span>
+
+        <span class="n">mean_points</span> <span class="o">=</span> <span class="n">dataset_module</span><span class="o">.</span><span class="n">IMMPoints</span><span class="p">(</span><span class="n">points_list</span><span class="o">=</span><span class="n">shape_model</span><span class="o">.</span><span class="n">mean_values</span><span class="p">)</span>
+        <span class="n">mean_points</span><span class="o">.</span><span class="n">get_scaled_points</span><span class="p">(</span><span class="n">input_image</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="n">reconstruction</span><span class="o">.</span><span class="n">reconstruct_texture</span><span class="p">(</span>
+            <span class="n">input_image</span><span class="p">,</span>  <span class="c1"># src image</span>
+            <span class="n">input_image</span><span class="p">,</span>  <span class="c1"># dst image</span>
+            <span class="n">texture_model</span><span class="p">,</span>
+            <span class="n">input_points</span><span class="p">,</span>  <span class="c1"># shape points input</span>
+            <span class="n">mean_points</span><span class="p">,</span>   <span class="c1"># shape points mean</span>
+        <span class="p">)</span></div>
+
+<span class="k">def</span> <span class="nf">show_reconstruction</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">model_shape_file</span><span class="p">,</span> <span class="s1">&#39;--model_texture_file needs to be provided to save the pca model&#39;</span>
+    <span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">model_texture_file</span><span class="p">,</span> <span class="s1">&#39;--model_texture_file needs to be provided to save the pca model&#39;</span>
+    <span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">shape_type</span><span class="p">,</span> <span class="s1">&#39;--shape_type the type of dataset, see datasets module&#39;</span>
+
+    <span class="n">dataset_module</span> <span class="o">=</span> <span class="n">import_dataset_module</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">shape_type</span><span class="p">)</span>
+
+    <span class="n">shape_model</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">PcaModel</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">model_shape_file</span><span class="p">)</span>
+    <span class="n">texture_model</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">PcaModel</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">model_texture_file</span><span class="p">)</span>
+
+    <span class="n">input_points</span> <span class="o">=</span> <span class="n">dataset_module</span><span class="o">.</span><span class="n">IMMPoints</span><span class="p">(</span>
+        <span class="n">filename</span><span class="o">=</span><span class="s1">&#39;data/imm_face_db/40-3m.asf&#39;</span>
+    <span class="p">)</span>
+
+    <span class="n">input_image</span> <span class="o">=</span> <span class="n">input_points</span><span class="o">.</span><span class="n">get_image</span><span class="p">()</span>
+
+    <span class="n">mean_points</span> <span class="o">=</span> <span class="n">dataset_module</span><span class="o">.</span><span class="n">IMMPoints</span><span class="p">(</span><span class="n">points_list</span><span class="o">=</span><span class="n">shape_model</span><span class="o">.</span><span class="n">mean_values</span><span class="p">)</span>
+    <span class="n">mean_points</span><span class="o">.</span><span class="n">get_scaled_points</span><span class="p">(</span><span class="n">input_image</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">reconstruction</span><span class="o">.</span><span class="n">reconstruct_texture</span><span class="p">(</span>
+            <span class="n">input_image</span><span class="p">,</span>  <span class="c1"># src image</span>
+            <span class="n">input_image</span><span class="p">,</span>  <span class="c1"># dst image</span>
+            <span class="n">texture_model</span><span class="p">,</span>
+            <span class="n">input_points</span><span class="p">,</span>  <span class="c1"># shape points input</span>
+            <span class="n">mean_points</span><span class="p">,</span>   <span class="c1"># shape points mean</span>
+        <span class="p">)</span>
+
+        <span class="n">dst</span> <span class="o">=</span> <span class="n">reconstruction</span><span class="o">.</span><span class="n">get_texture</span><span class="p">(</span>
+                <span class="n">mean_points</span><span class="p">,</span> <span class="n">texture_model</span><span class="o">.</span><span class="n">mean_values</span>
+            <span class="p">)</span>
+
+        <span class="n">cv2</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="s1">&#39;original&#39;</span><span class="p">,</span> <span class="n">input_points</span><span class="o">.</span><span class="n">get_image</span><span class="p">())</span>
+        <span class="n">cv2</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="s1">&#39;reconstructed&#39;</span><span class="p">,</span> <span class="n">input_image</span><span class="p">)</span>
+        <span class="n">cv2</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="s1">&#39;main face&#39;</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span>
+
+        <span class="n">k</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">waitKey</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xFF</span>
+
+        <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="mi">27</span><span class="p">:</span>
+            <span class="k">break</span>
+
+    <span class="n">cv2</span><span class="o">.</span><span class="n">destroyAllWindows</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../index.html#main.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;main&quot;&quot;&quot;</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">add_parser_options</span><span class="p">()</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">show_pca</span><span class="p">:</span>
+        <span class="n">show_pca_model</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">save_pca_shape</span><span class="p">:</span>
+        <span class="n">save_pca_model_shape</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">save_pca_texture</span><span class="p">:</span>
+        <span class="n">save_pca_model_texture</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">reconstruct</span><span class="p">:</span>
+        <span class="c1">#reconstruct_with_model(args)</span>
+        <span class="n">show_reconstruction</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">show_kivy</span><span class="p">:</span>
+        <span class="n">reconstruct_with_model</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">args</span><span class="o">.</span><span class="n">generate_call_graph</span><span class="p">:</span>
+        <span class="n">generate_call_graph</span><span class="p">(</span><span class="n">args</span><span class="p">)</span></div>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Richard Torenvliet.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
