@@ -2,7 +2,6 @@
 # python std
 import argparse
 import logging
-import sys
 import importlib
 
 # installed packages
@@ -27,11 +26,6 @@ def add_parser_options():
     pca_group.add_argument(
         '--reconstruct', action='store_true',
         help='Reconstruct one face with a given pca model'
-    )
-
-    pca_group.add_argument(
-        '--show_kivy', action='store_true',
-        help='Reconstruct using kivy as a GUI'
     )
 
     pca_group.add_argument(
@@ -166,39 +160,6 @@ def save_pca_model_shape(args):
     logger.info('shape pca model saved in %s', args.model_shape_file + '_shape')
 
 
-def reconstruct_with_model(args):
-    assert args.files, '--files should be given to allow the image to be shown'
-    assert args.model_shape_file, '--model_shape_file needs to be provided to get the pca model'
-    assert args.shape_type, '--shape_type the type of dataset, see datasets module'
-
-    dataset_module = import_dataset_module(args.shape_type)
-
-    # clear sys args. arguments are conflicting with parseargs
-    # kivy will parse args upon import and will crash if it finds our
-    # 'unsupported by kivy' arguments.
-    sys.argv[1:] = []
-
-    from view.reconstruct import ReconstructApp
-
-    Vt_shape, s, n_shape_components, mean_value_points, triangles = pca.load(args.model_shape_file)
-    Vt_texture, s_texture, n_texture_components, mean_values_texture, _ = pca.load(args.model_texture_file)
-
-    app = ReconstructApp()
-
-    app.set_values(
-        args=args,
-        eigenv_shape=Vt_shape,
-        eigenv_texture=Vt_texture,
-        mean_value_points=mean_value_points,
-        n_shape_components=n_shape_components,
-        mean_values_texture=mean_values_texture,
-        n_texture_components=n_texture_components,
-        triangles=triangles
-    )
-
-    app.run()
-
-
 def generate_call_graph(args):
     """Performance debug function, will be (re)moved later. """
     assert args.model_shape_file, '--model_texture_file needs to be provided to save the pca model'
@@ -284,10 +245,7 @@ def main():
     elif args.save_pca_texture:
         save_pca_model_texture(args)
     elif args.reconstruct:
-        #reconstruct_with_model(args)
         show_reconstruction(args)
-    elif args.show_kivy:
-        reconstruct_with_model(args)
     elif args.generate_call_graph:
         generate_call_graph(args)
 

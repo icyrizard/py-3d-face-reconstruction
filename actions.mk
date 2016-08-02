@@ -63,14 +63,6 @@ graph_reconstruction:
 		--shape_type imm \
 		--n_components 6
 
-show_kivy:
-	python src/main.py \
-		--show_kivy \
-		--files data/imm_face_db/*.asf \
-		--model_texture_file data/pca_texture_model.npy \
-		--model_shape_file data/pca_shape_model.npy \
-		--n_components 6
-
 test:
 	python -m py.test -f src/test/*_test.py
 
