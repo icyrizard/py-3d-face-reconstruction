@@ -8,13 +8,10 @@ const ThreeComponent = Ember.Component.extend({
     scene: null,
 
     willRender() {
-        if (this.scene) {
-            return;
-        }
+        if (this.scene) { return; }
 
         var scene = new THREE.Scene();
         var gui = new dat.GUI();
-
         var camera = new THREE.PerspectiveCamera(
             75, window.innerWidth / window.innerHeight, 0.1, 1000
         );
@@ -23,10 +20,25 @@ const ThreeComponent = Ember.Component.extend({
 
         var renderer = new THREE.WebGLRenderer();
 
+        // the sidebar 'dat-gui' controls
+        var reconstructionControls = {
+            index: 0,
+            shape_components: 58,
+            background_image: true,
+        };
+
+        for(var i = 0; i < 15; i++) {
+            reconstructionControls['shape_eigen_value_' + i] = 0.0;
+        }
+
+        var shapeEigenValueSliders = {};
+
         this.set('scene', scene);
         this.set('camera', camera);
         this.set('renderer', renderer);
         this.set('gui', gui);
+        this.set('controls', reconstructionControls);
+        this.set('shapeEigenValueSliders', shapeEigenValueSliders);
 
         this.get('store').findAll('face').then((faces) => {
             this.set('faces', faces);
@@ -45,29 +57,47 @@ const ThreeComponent = Ember.Component.extend({
 
     }),
 
+    /**
+     * Adds the 'dat-gui' sliders
+     *
+     * See:
+     * http://learningthreejs.com/blog/2011/08/14/dat-gui-simple-ui-for-demos/
+     */
     addSliders() {
         var self = this;
         var gui = this.get('gui');
-        var obj = {
-            name: "Image filename",
-            index: 0
-        };
-
-        var components = {
-            name: "Components",
-            components: 0
-        };
+        var reconstructionControls = this.get('controls');
+        var shapeEigenValueSliders = this.get('shapeEigenValueSliders');
 
         var length = this.get('faces').get('length');
 
-        var imagesSlider = gui.add(obj, "index").min(0).max(
-                length - 1).step(1);
+        var index = gui.add(reconstructionControls, 'index', 0, length - 1);
+        var shape_components = gui.add(reconstructionControls, 'shape_components', 0, 58);
 
-        gui.add(components, "components").min(0).max(length - 1).step(1);
+        var background = gui.add(reconstructionControls, 'background_image');
+        var shapeEigenValueControls = gui.addFolder('shape_eigen_values');
 
-        imagesSlider.onChange(function(newValue) {
-            self.set('image_index', newValue);
-            self.sendAction('update', newValue);
+        for(var i = 0; i < 15; i++) {
+            shapeEigenValueControls.add(reconstructionControls, 'shape_eigen_value_' + i, 0.0, 10.0);
+        }
+
+        // on index change
+        index.onChange(function(newValue) {
+            // update the image_index, which is on the controller
+            self.set('image_index', parseInt(newValue));
+            self.sendAction('updateIndex', parseInt(newValue));
+        });
+
+        background.onChange(function(newValue) {
+            self.sendAction('updateBackground', newValue);
+        });
+
+        shape_components.onChange(function(newValue) {
+            self.sendAction('updateShapeComponents', newValue);
+        });
+
+        reconstructionControls.onChange(function(newValue) {
+            console.log(newValue);
         });
     }
 });

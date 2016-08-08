@@ -4,11 +4,13 @@ import base64
 from glob import glob
 
 import cv2
+import numpy as np
 from tornado import websocket, web, ioloop, autoreload
 
 import pca
 from datasets import imm
 from reconstruction import reconstruction
+from settings import logger
 
 BASE = '../viewer/app'
 FILES_DIR = '../data/'
@@ -19,7 +21,7 @@ FACE_DB = '{}{}'.format(FILES_DIR, FACE_DB_NAME)
 class ImageWebSocketHandler(websocket.WebSocketHandler):
     handlers = {
         'filename': 'handle_return_image',
-        'reconstruction_index': 'handle_return_reconstruction'
+        'reconstruction': 'handle_return_reconstruction'
     }
 
     def __init__(self, *args, **kwargs):
@@ -57,6 +59,12 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
     def handle_return_reconstruction(self, message):
         """ Return the reconstruction of the given image """
         image_index = message['reconstruction_index']
+        image_as_background = message.get('background_image', True)
+        shape_components = message.get('shape_components', 58)
+        print message
+
+        logger.info('using %s shape_components', shape_components)
+
         asf_filename = self.asf[image_index]
 
         input_points = imm.IMMPoints(filename=asf_filename)
@@ -65,16 +73,29 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
         mean_points = imm.IMMPoints(points_list=self.shape_model.mean_values)
         mean_points.get_scaled_points(input_image.shape)
 
-        #TODO This one is VERY SLOW, try to optimize
-        reconstruction.reconstruct_texture(
-            input_image,  # src image
-            input_image,  # dst image
-            self.texture_model,
-            input_points,  # shape points input
-            mean_points,   # shape points mean
+        # set dst image to an empty image if value is None
+        if image_as_background is False:
+            h, w, _ = input_image.shape
+            dst_image = np.full((h, w, 3), fill_value=0, dtype=np.uint8)
+        else:
+            dst_image = input_image
+
+        reconstruction.reconstruct_shape(
+            input_image, input_points, self.shape_model,
+            n_components=shape_components
         )
 
-        _, reconstructed = cv2.imencode('.jpg', input_image)
+        reconstruction.reconstruct_texture(
+            input_image,  # src image
+            dst_image,  # dst image
+            self.texture_model,
+            input_points,  # shape points input
+            mean_points   # shape points mean
+        )
+
+        input_points.draw_triangles(show_points=False)
+
+        _, reconstructed = cv2.imencode('.jpg', dst_image)
         reconstructed = base64.b64encode(reconstructed)
 
         self.write_message(json.dumps({'reconstructed': reconstructed}))
@@ -96,7 +117,7 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
                 print(msg, e)
                 self.__return_error(msg)
 
-            handler(message)
+            handler(message[m])
 
     def on_close(self):
         print("WebSocket closed")

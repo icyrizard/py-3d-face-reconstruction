@@ -153,12 +153,19 @@ def reconstruct(feature_vector, Vt, mean_values, n_components=None):
 
     """
 
+    # if n_components is None, use all components.
     if n_components is None:
         n_components = Vt.shape[1]
 
+    # create the zero mean, is always needed for PCA reconstruction.
+    # we can only alter the data in zero_mean.
     zm = feature_vector - mean_values
+
+    # project the zero mean onto the the VT bases (with potentially less
+    # amount of dimensions than the original.
     yk = np.dot(Vt[:n_components], zm.T)
 
+    # project back to the original and add the mean_values again.
     return np.dot(Vt[:n_components].T, yk) + mean_values
 
 

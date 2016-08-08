@@ -92,27 +92,6 @@ class IMMPoints(aam.AAMPoints):
 
         return np.asarray(points_list, dtype='f')
 
-    def draw_triangles(self, image, points, multiply=True):
-        if multiply:
-            h, w, c = image.shape
-
-            points[:, 0] = points[:, 0] * w
-            points[:, 1] = points[:, 1] * h
-
-        point_indices = list(range(0, 58))
-        triangles = Triangulation(points[:, 0], points[:, 1])
-
-        for t, tri in enumerate(triangles.triangles):
-            p1, p2, p3 = points[tri]
-            cv2.line(image, tuple(p1), tuple(p2), (255, 0, 100), 1)
-            cv2.line(image, tuple(p2), tuple(p3), (255, 0, 100), 1)
-            cv2.line(image, tuple(p3), tuple(p1), (255, 0, 100), 1)
-
-        for i, p in enumerate(points):
-            point_index = int(point_indices[i])
-            cv2.putText(image, str(point_index), tuple((p[0], p[1])),
-                        cv2.FONT_HERSHEY_SIMPLEX, .5, (100, 0, 255))
-            cv2.circle(image, tuple(p), 3, color=(0, 255, 100))
 
     def show_on_image(self, image, window_name='image', multiply=True):
         self.draw_triangles(image, self.points_list, multiply=multiply)

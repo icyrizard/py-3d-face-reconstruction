@@ -82,6 +82,30 @@ class AAMPoints():
 
         return self.points_list
 
+    def draw_triangles(self, image=None, show_points=True):
+        assert self.points_list is not None, \
+            'the list points already need to be scaled order to correctly work,\
+            this requires that get_scaled_points is executed first.'
+
+        if image is None:
+            image = self.image
+
+        triangles = Triangulation(self.points_list[:, 0], self.points_list[:, 1])
+
+        for t, tri in enumerate(triangles.triangles):
+            p1, p2, p3 = self.points_list[tri]
+            cv2.line(image, tuple(p1), tuple(p2), (255, 0, 100), 1)
+            cv2.line(image, tuple(p2), tuple(p3), (255, 0, 100), 1)
+            cv2.line(image, tuple(p3), tuple(p1), (255, 0, 100), 1)
+
+        if show_points:
+            point_indices = list(range(0, max(self.actual_shape)))
+            for i, p in enumerate(self.points_list):
+                point_index = int(point_indices[i])
+                cv2.putText(image, str(point_index), tuple((p[0], p[1])),
+                            cv2.FONT_HERSHEY_SIMPLEX, .5, (100, 0, 255))
+                cv2.circle(image, tuple(p), 3, color=(0, 255, 100))
+
     def calculate_bounding_box(self):
         """
         Calculate bounding box in the **scaled** points list

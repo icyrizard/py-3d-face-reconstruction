@@ -1,12 +1,4 @@
 {{# if current_face_filename }}
     <img src='{{current_face_filename}}' alt='missing original'>
-{{else}}
-<div class="table">
-    <div class="table-cell align-middle">
-        {{fa-icon "spinner" spin=true size='lg'}}
-        Loading..
-    </div>
-</div>
 {{/if}}
-
 {{yield}}

@@ -2,6 +2,7 @@
 # python std
 import argparse
 import importlib
+import copy
 
 # installed packages
 import cv2
@@ -207,27 +208,43 @@ def show_reconstruction(args):
     mean_points = dataset_module.IMMPoints(points_list=shape_model.mean_values)
     mean_points.get_scaled_points(input_image.shape)
 
+    n_components = 58
+    count = 0
+
     while True:
-        reconstruction.reconstruct_texture(
-            input_image,  # src image
-            input_image,  # dst image
-            texture_model,
-            input_points,  # shape points input
-            mean_points,   # shape points mean
+        input_image_copy = input_image.copy()
+        input_points_copy = copy.deepcopy(input_points)
+
+        reconstruction.reconstruct_shape(
+            input_image_copy, input_points_copy, shape_model,
+            n_components=n_components - count
         )
 
-        dst = reconstruction.get_texture(
-                mean_points, texture_model.mean_values
-            )
+        reconstruction.reconstruct_texture(
+            input_image_copy,  # src image
+            input_image_copy,  # dst image
+            texture_model,
+            input_points_copy,  # shape points input
+            mean_points    # shape points mean
+        )
 
-        cv2.imshow('original', input_points.get_image())
-        cv2.imshow('reconstructed', input_image)
+        input_points_copy.get_scaled_points(input_image.shape)
+        input_points_copy.draw_triangles(image=input_image_copy, show_points=False)
+
+        dst = reconstruction.get_texture(
+            mean_points, texture_model.mean_values
+        )
+
+        cv2.imshow('original', input_image)
+        cv2.imshow('reconstructed', input_image_copy)
         cv2.imshow('main face', dst)
 
         k = cv2.waitKey(0) & 0xFF
 
         if k == 27:
             break
+
+        count += 2
 
     cv2.destroyAllWindows()
 

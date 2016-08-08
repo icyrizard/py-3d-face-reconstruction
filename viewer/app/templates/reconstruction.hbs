@@ -3,25 +3,34 @@
 <div class="container">
     <div class="clearfix">
         <div class="col col-6">
-            {{images-loader image_index=image_index}}
+            {{images-loader image_index=image_index
+                background_image=background_image
+                shape_components=shape_components
+                loading=loading
+            }}
         </div>
 
         <div class="col col-6">
-            {{#if loading }}
-                <div class="table">
-                    <div class="table-cell align-middle">
-                        {{fa-icon "spinner" spin=true size='lg'}}
-                        Loading..
-                    </div>
+            <div class="table">
+                <div class="table-cell align-middle">
+                    {{#if reconstructed }}
+                        <img src='data:image/jpg;base64,{{reconstructed}}'
+                            alt='missing image'>
+                    {{/if}}
+
+                    {{#if loading }}
+                        {{fa-icon "spinner" spin=true size='lg'}} Loading..
+                    {{/if}}
                 </div>
-            {{else if reconstructed }}
-                <img src='data:image/jpg;base64,{{reconstructed}}'
-                    alt='missing image'>
-            {{/if}}
+            </div>
         </div>
     </div>
 
     <div class="col col-12 px2">
-        {{three-js-reconstruction update=(action 'updateComponentConnector')}}
+        {{three-js-reconstruction
+            updateIndex=(action 'updateIndexComponentConnector')
+            updateBackground=(action 'updateBackgroundComponentConnector')
+            updateShapeComponents=(action 'updateShapeComponents')
+        }}
     </div>
 </div>

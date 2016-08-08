@@ -10,7 +10,8 @@ export default Ember.Controller.extend({
     image: null,
 
     image_index: 0,
-    n_components: null,
+    background_image: true,
+    shape_components: null,
     n_images: null,
     reconstructed: null,
 
@@ -64,7 +65,8 @@ export default Ember.Controller.extend({
         this.set('loading', false);
     },
 
-    getReconstruction: Ember.observer('image_index', function() {
+    getReconstruction: Ember.observer(
+            'image_index', 'background_image', 'shape_components', function() {
         this.send('getReconstruction');
     }),
 
@@ -75,7 +77,6 @@ export default Ember.Controller.extend({
     actions: {
         getImage(faceModel) {
             this.set('loading', true);
-
             var filename = faceModel.get('filename');
             const socket = this.get('socketRef');
 
@@ -86,18 +87,33 @@ export default Ember.Controller.extend({
 
         getReconstruction() {
             this.set('loading', true);
-
             const socket = this.get('socketRef');
 
             socket.send(
-                JSON.stringify({reconstruction_index: this.get('image_index')}
+                JSON.stringify({
+                    reconstruction: {
+                        reconstruction_index: this.get('image_index'),
+                        background_image: this.get('background_image'),
+                        shape_components: this.get('shape_components')
+                    }
+
+                }
             ));
         },
 
         // connects components together
         // handles the upate action passed to a component
-        updateComponentConnector(index) {
+        updateIndexComponentConnector(index) {
             this.set('image_index', index);
+        },
+
+        updateBackgroundComponentConnector(showBackground) {
+            this.set('background_image', showBackground);
+        },
+
+        updateShapeComponents(components) {
+            console.log('shape_components', components);
+            this.set('shape_components', components);
         }
     }
 });
