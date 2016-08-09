@@ -20,25 +20,10 @@ const ThreeComponent = Ember.Component.extend({
 
         var renderer = new THREE.WebGLRenderer();
 
-        // the sidebar 'dat-gui' controls
-        var reconstructionControls = {
-            index: 0,
-            shape_components: 58,
-            background_image: true,
-        };
-
-        for(var i = 0; i < 15; i++) {
-            reconstructionControls['shape_eigen_value_' + i] = 0.0;
-        }
-
-        var shapeEigenValueSliders = {};
-
         this.set('scene', scene);
         this.set('camera', camera);
         this.set('renderer', renderer);
         this.set('gui', gui);
-        this.set('controls', reconstructionControls);
-        this.set('shapeEigenValueSliders', shapeEigenValueSliders);
 
         this.get('store').findAll('face').then((faces) => {
             this.set('faces', faces);
@@ -66,20 +51,19 @@ const ThreeComponent = Ember.Component.extend({
     addSliders() {
         var self = this;
         var gui = this.get('gui');
-        var reconstructionControls = this.get('controls');
-        var shapeEigenValueSliders = this.get('shapeEigenValueSliders');
+
+        // the sidebar 'dat-gui' controls
+        var reconstructionControls = {
+            index: 0,
+            shape_components: 58,
+            background_image: true
+        };
 
         var length = this.get('faces').get('length');
 
         var index = gui.add(reconstructionControls, 'index', 0, length - 1);
-        var shape_components = gui.add(reconstructionControls, 'shape_components', 0, 58);
-
+        var shapeComponents = gui.add(reconstructionControls, 'shape_components', 0, 58);
         var background = gui.add(reconstructionControls, 'background_image');
-        var shapeEigenValueControls = gui.addFolder('shape_eigen_values');
-
-        for(var i = 0; i < 15; i++) {
-            shapeEigenValueControls.add(reconstructionControls, 'shape_eigen_value_' + i, 0.0, 10.0);
-        }
 
         // on index change
         index.onChange(function(newValue) {
@@ -92,13 +76,35 @@ const ThreeComponent = Ember.Component.extend({
             self.sendAction('updateBackground', newValue);
         });
 
-        shape_components.onChange(function(newValue) {
+        shapeComponents.onChange(function(newValue) {
             self.sendAction('updateShapeComponents', newValue);
         });
 
-        reconstructionControls.onChange(function(newValue) {
-            console.log(newValue);
+        var shapeEigenValueControls = gui.addFolder('shape_eigen_values');
+
+        /**
+        * ShapeSlider callback function
+        */
+        var handleShapeSlidersCb = function(value) {
+            var sliderObject = this;
+
+            // slider index is the last character of the slider property string.
+            var sliderCharacterIndex = sliderObject.property.length - 1;
+            var sliderIndex = parseInt(sliderObject.property[sliderCharacterIndex]);
+
+            self.sendAction('updateShapeEigenValues', sliderIndex, value);
+        };
+
+        var shapeEigenValues = this.get('shape_eigenvalues');
+
+        shapeEigenValues.forEach(function(value, index) {
+            reconstructionControls['shape_eigen_value_' + index] = value;
+            var slider = shapeEigenValueControls.add(reconstructionControls, 'shape_eigen_value_' + index, 0.0, 10.0);
+
+            slider.onChange(handleShapeSlidersCb);
         });
+
+        console.log(gui.__controllers);
     }
 });
 

@@ -11,9 +11,10 @@ export default Ember.Controller.extend({
 
     image_index: 0,
     background_image: true,
-    shape_components: null,
+    shape_components: 58,
     n_images: null,
     reconstructed: null,
+    shape_eigenvalues: [],
 
     socketRef: null,
 
@@ -25,6 +26,16 @@ export default Ember.Controller.extend({
         socket.on('close', this.closeHandler, this);
 
         this.set('socketRef', socket);
+        this.initShapeEigenValues(15);
+    },
+
+    initShapeEigenValues(amountOfEigenValues) {
+        var shapeEigenValues = this.get('shape_eigenvalues');
+
+        shapeEigenValues.length = amountOfEigenValues;
+        shapeEigenValues.fill(1.0);
+
+        this.set('shape_eigenvalues', shapeEigenValues);
     },
 
     willDestroyElement() {
@@ -66,7 +77,9 @@ export default Ember.Controller.extend({
     },
 
     getReconstruction: Ember.observer(
-            'image_index', 'background_image', 'shape_components', function() {
+            'image_index', 'background_image',
+            'shape_components', 'shape_eigenvalues', function() {
+        console.log('updating');
         this.send('getReconstruction');
     }),
 
@@ -94,11 +107,11 @@ export default Ember.Controller.extend({
                     reconstruction: {
                         reconstruction_index: this.get('image_index'),
                         background_image: this.get('background_image'),
-                        shape_components: this.get('shape_components')
+                        shape_components: this.get('shape_components'),
+                        shape_eigenvalues: this.get('shape_eigenvalues')
                     }
-
-                }
-            ));
+                })
+            );
         },
 
         // connects components together
@@ -114,6 +127,19 @@ export default Ember.Controller.extend({
         updateShapeComponents(components) {
             console.log('shape_components', components);
             this.set('shape_components', components);
+        },
+
+        updateShapeEigenValues(eigenValueIndex, value) {
+            console.log('shape_eigenvalues', value);
+            var eigenValues = this.get('shape_eigenvalues');
+            eigenValues[eigenValueIndex] = value;
+
+            this.set('shape_eigenvalues', eigenValues);
+            this.send('getReconstruction');
+        },
+
+        resetShapeEigenValues(gui) {
+            this.initShapeEigenValues(15);
         }
     }
 });

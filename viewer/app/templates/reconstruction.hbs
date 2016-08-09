@@ -28,9 +28,12 @@
 
     <div class="col col-12 px2">
         {{three-js-reconstruction
+            shape_eigenvalues=shape_eigenvalues
             updateIndex=(action 'updateIndexComponentConnector')
             updateBackground=(action 'updateBackgroundComponentConnector')
             updateShapeComponents=(action 'updateShapeComponents')
+            updateShapeEigenValues=(action 'updateShapeEigenValues')
+            resetShapeEigenValues=(action 'resetShapeEigenValues')
         }}
     </div>
 </div>

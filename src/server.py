@@ -61,7 +61,11 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
         image_index = message['reconstruction_index']
         image_as_background = message.get('background_image', True)
         shape_components = message.get('shape_components', 58)
-        print message
+        shape_eigenvalues_multiplier = message.get('shape_eigenvalues')
+
+        shape_eigenvalues_multiplier = np.asarray(
+            shape_eigenvalues_multiplier, dtype=np.float32
+        )
 
         logger.info('using %s shape_components', shape_components)
 
@@ -80,8 +84,20 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
         else:
             dst_image = input_image
 
+        output_points = imm.IMMPoints(
+            points_list=input_points.get_points()
+        )
+
+        shape_Vt = self.shape_model.Vt
+        shape_Vt = reconstruction.scale_eigenvalues(
+            shape_Vt, shape_eigenvalues_multiplier
+        )
+
+        # recontruct the shape
         reconstruction.reconstruct_shape(
-            input_image, input_points, self.shape_model,
+            output_points,
+            self.shape_model,
+            shape_Vt=shape_Vt,  # overwrite by scaled Vt
             n_components=shape_components
         )
 
@@ -90,10 +106,11 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
             dst_image,  # dst image
             self.texture_model,
             input_points,  # shape points input
-            mean_points   # shape points mean
+            mean_points,   # shape points mean
+            output_points
         )
 
-        input_points.draw_triangles(show_points=False)
+        output_points.draw_triangles(image=dst_image, show_points=False)
 
         _, reconstructed = cv2.imencode('.jpg', dst_image)
         reconstructed = base64.b64encode(reconstructed)
@@ -112,12 +129,15 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
         for m in message.keys():
             try:
                 handler = getattr(self, self.handlers[m])
+                handler(message[m])
             except (AttributeError, KeyError) as e:
                 msg = 'no handler for {}'.format(m)
                 print(msg, e)
                 self.__return_error(msg)
-
-            handler(message[m])
+            except Exception as e:
+                msg = 'no handler for {}'.format(m)
+                print(msg, e)
+                self.__return_error(msg)
 
     def on_close(self):
         print("WebSocket closed")
