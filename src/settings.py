@@ -8,6 +8,8 @@ import logging
 import logging.config
 import os
 
+
+LANDMARK_DETECTOR_PATH = 'data/shape_predictor_68_face_landmarks.dat'
 #logging.basicConfig(level=logging.INFO,
 #                    format='%(asctime)s %(levelname)s %(name)s: %(message)s')
 

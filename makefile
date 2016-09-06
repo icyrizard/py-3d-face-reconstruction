@@ -3,16 +3,19 @@ PYTHON := python2.7
 PYTHON_BIN_PATH := /usr/local/bin/$(PYTHON)
 SITE_PACKAGES := $(VIRTUALENV)/lib/$(PYTHON)/site-packages
 
-OPENCV:= $(SITE_PACKAGES)/cv.py $(SITE_PACKAGES)/cv2.so
+OPENCV := $(SITE_PACKAGES)/cv.py $(SITE_PACKAGES)/cv2.so
 
-TARGETS:= $(OPENCV) $(VIRTUALENV) data reconstruction
+TARGETS := $(OPENCV) $(VIRTUALENV) data reconstruction
+
+include build.mk
+
 all: $(TARGETS)
 
 include actions.mk
 include src/reconstruction/build.mk
 
 data: data/imm_face_db
-reconstruction: texture.so src/reconstruction/texture_halide
+reconstruction: texture.so
 
 OS := $(shell uname)
 

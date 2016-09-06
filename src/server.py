@@ -11,6 +11,7 @@ import pca
 from datasets import imm
 from reconstruction import reconstruction
 from settings import logger
+from utility import import_dataset_module
 
 BASE = '../viewer/app'
 FILES_DIR = '../data/'
@@ -71,10 +72,11 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
 
         asf_filename = self.asf[image_index]
 
+        dataset_module = import_dataset_module(args.shape_type)
         input_points = imm.IMMPoints(filename=asf_filename)
         input_image = input_points.get_image()
 
-        mean_points = imm.IMMPoints(points_list=self.shape_model.mean_values)
+        mean_points = dataset_module.factory(points_list=shape_model.mean_values)
         mean_points.get_scaled_points(input_image.shape)
 
         # set dst image to an empty image if value is None

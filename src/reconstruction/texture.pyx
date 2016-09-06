@@ -59,11 +59,13 @@ cdef inline cartesian2barycentric(
         ndarray (of dim 3) weights of the barycentric coordinates
 
     """
-    lambdas[0] = ((y_2 - y_3) * (x - x_3) + (x_3 - x_2) * (y - y_3)) / \
-                ((y_2 - y_3) * (x_1 - x_3) + (x_3 - x_2) * (y_1 - y_3))
+    cdef float cross_2 = ((y_2 - y_3) * (x_1 - x_3) + (x_3 - x_2) * (y_1 - y_3))
 
-    lambdas[1] = ((y_3 - y_1) * (x - x_3) + (x_1 - x_3) * (y - y_3)) / \
-                ((y_2 - y_3) * (x_1 - x_3) + (x_3 - x_2) * (y_1 - y_3))
+    if (cross_2 <= 0.0):
+        cross_2 = 0.01
+
+    lambdas[0] = ((y_2 - y_3) * (x - x_3) + (x_3 - x_2) * (y - y_3)) / cross_2
+    lambdas[1] = ((y_3 - y_1) * (x - x_3) + (x_1 - x_3) * (y - y_3)) / cross_2
 
     lambdas[2] = 1 - lambdas[0] - lambdas[1]
 
@@ -174,12 +176,11 @@ def fill_triangle_src_dst(np.ndarray[unsigned char, ndim=3] src,
     cdef int x_max = np.argmax(triangle_x)
     cdef int y_min = np.argmin(triangle_y)
     cdef int y_max = np.argmax(triangle_y)
-    ###
 
     # walk over x and y values of this bounding box see if the
     # pixel is in or out the boudning box
-    for y in xrange(triangle_y[y_min], triangle_y[y_max]):
-        for x in xrange(triangle_x[x_min], triangle_x[x_max]):
+    for y in xrange(triangle_y[y_min] + 1, triangle_y[y_max] - 1):
+        for x in xrange(triangle_x[x_min] + 1, triangle_x[x_max] - 1):
             cartesian2barycentric(
                 triangle_x[0], triangle_y[0],
                 triangle_x[1], triangle_y[1],

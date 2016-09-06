@@ -3,7 +3,6 @@ import numpy as np
 
 import pca
 import aam
-from .texture import fill_triangle_src_dst
 
 
 def cartesian2barycentric(r1, r2, r3, r):
@@ -78,7 +77,7 @@ def get_texture(Points, flattened_texture):
 
 
 def scale_eigenvalues(Vt, multiplier_array):
-    multipliers = np.ones(Vt.shape[1], dtype=np.float32)
+    multipliers = np.ones(Vt.shape[0], dtype=np.float32)
     multipliers[:len(multiplier_array)] = multiplier_array
     Vt = np.dot(np.diag(multipliers), Vt)
 

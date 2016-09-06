@@ -1,84 +1,18 @@
 #!/usr/local/bin/python
 # python std
-import argparse
-import importlib
-import copy
 
 # installed packages
 import cv2
+import numpy as np
+import copy
 
 # local imports
 import pca
 import aam
-import numpy as np
-# import imm
-
 from reconstruction import reconstruction
-
 from settings import logger
-
-
-def add_parser_options():
-    parser = argparse.ArgumentParser(description='IMMPoints tool')
-    pca_group = parser.add_argument_group('show_reconstruction')
-
-    pca_group.add_argument(
-        '--reconstruct', action='store_true',
-        help='Reconstruct one face with a given pca model'
-    )
-
-    pca_group.add_argument(
-        '--generate_call_graph', action='store_true',
-        help='Generate call graph from the reconstruction'
-    )
-
-    pca_group.add_argument(
-        '--save_pca_shape', action='store_true',
-        help='save the pca shape model'
-    )
-
-    pca_group.add_argument(
-        '--save_pca_texture', action='store_true',
-        help='save the pca texture model'
-    )
-
-    pca_group.add_argument(
-        '--files', nargs='+', help='files to process'
-    )
-
-    pca_group.add_argument(
-        '--n_components', default=10, type=int,
-        help='number of principle components to keep and are able to manipulate'
-    )
-
-    pca_group.add_argument(
-        '--model_shape_file', type=str,
-        help='pca model file that contains or is going to contain the pca shape model'
-    )
-
-    pca_group.add_argument(
-        '--shape_type', type=str, choices=['imm'],
-        help='type of shape, annotated dataset'
-    )
-
-    pca_group.add_argument(
-        '--model_texture_file', type=str,
-        help='pca model file that contains or is going to contain the pca texture model'
-    )
-
-    return parser
-
-
-def import_dataset_module(shape_type):
-    """
-    Includes the right implementation for the right dataset implementation for
-    the given shape type, see --help for the available options.
-
-    Args:
-        shape_type(string): Name of the python file inside the
-        `src/datasets` folder.
-    """
-    return importlib.import_module('datasets.{}'.format(shape_type))
+from input_parser import get_argument_parser
+from utility import import_dataset_module
 
 
 def save_pca_model_texture(args):
@@ -102,13 +36,14 @@ def save_pca_model_texture(args):
     assert args.model_shape_file, '--model_texture_file needs to be provided to save the pca model'
     assert args.shape_type, '--shape_type the type of dataset, see datasets module'
 
-    dataset_module = import_dataset_module(args.shape_type)
     shape_model = pca.PCAModel(args.model_shape_file)
-    mean_points = dataset_module.IMMPoints(points_list=shape_model.mean_values)
+
+    dataset_module = import_dataset_module(args.shape_type)
+    mean_points = dataset_module.factory(points_list=shape_model.mean_values)
 
     textures = aam.build_texture_feature_vectors(
         args.files,
-        dataset_module.get_imm_image_with_landmarks,  # function
+        dataset_module.get_image_with_landmarks,  # function
         mean_points,
         shape_model.triangles
     )
@@ -145,7 +80,7 @@ def save_pca_model_shape(args):
     dataset_module = import_dataset_module(args.shape_type)
 
     points = aam.build_shape_feature_vectors(
-        args.files, dataset_module.get_imm_points, flattened=True
+        args.files, dataset_module.get_points, flattened=True
     )
 
     mean_values = aam.get_mean(points)
@@ -194,35 +129,33 @@ def show_reconstruction(args):
     assert args.model_shape_file, '--model_texture_file needs to be provided to save the pca model'
     assert args.model_texture_file, '--model_texture_file needs to be provided to save the pca model'
     assert args.shape_type, '--shape_type the type of dataset, see datasets module'
+    assert args.files, '--files should be given'
 
-    dataset_module = import_dataset_module(args.shape_type)
 
     shape_model = pca.PCAModel(args.model_shape_file)
     texture_model = pca.PCAModel(args.model_texture_file)
 
-    input_points = dataset_module.IMMPoints(
-        filename='data/imm_face_db/01-1m.asf'
-    )
+    dataset_module = import_dataset_module(args.shape_type)
+    mean_points = dataset_module.factory(points_list=shape_model.mean_values)
 
-    input_image = input_points.get_image()
+    shape_eigenvalues_multiplier = np.ones(5, dtype=np.float32)
 
-    mean_points = dataset_module.IMMPoints(points_list=shape_model.mean_values)
-    mean_points.get_scaled_points(input_image.shape)
+    for face in args.files:
+        input_points = dataset_module.factory(filename=face)
+        input_image = input_points.get_image()
 
-    n_components = 58
-    count = 0
-    shape_eigenvalues_multiplier = np.ones(15, dtype=np.float32)
+        mean_points.get_scaled_points(input_image.shape)
 
-    while True:
         input_image_copy = input_image.copy()
         input_points_copy = copy.deepcopy(input_points)
 
-        output_points = dataset_module.IMMPoints(
+        output_points = dataset_module.factory(
             points_list=input_points.get_points()
         )
 
         # scale by scaling the Vt matrix
         shape_Vt = shape_model.Vt
+
         shape_Vt = reconstruction.scale_eigenvalues(
             shape_Vt, shape_eigenvalues_multiplier
         )
@@ -231,8 +164,7 @@ def show_reconstruction(args):
         reconstruction.reconstruct_shape(
             output_points,
             shape_model,
-            shape_Vt=shape_Vt,  # overwrite by scaled Vt
-            n_components=n_components - count
+            shape_Vt=shape_Vt  # overwrite by scaled Vt
         )
 
         # use the new shape ane mean points to reconstruct
@@ -252,15 +184,26 @@ def show_reconstruction(args):
             mean_points, texture_model.mean_values
         )
 
-        #count += 2
-        shape_eigenvalues_multiplier[0] += 0.1
+        cv2.imshow('dst', input_image_copy)
+        k = cv2.waitKey(0) & 0xff
+
+        if k == 27:
+            break
 
     cv2.destroyAllWindows()
 
 
+def test_landmarks(args):
+    import landmarks
+    filename = args.image
+    image = cv2.imread(filename)
+
+    landmarks.detect(image)
+
+
 def main():
     """main"""
-    parser = add_parser_options()
+    parser = get_argument_parser()
     args = parser.parse_args()
 
     if args.save_pca_shape:
@@ -271,6 +214,8 @@ def main():
         show_reconstruction(args)
     elif args.generate_call_graph:
         generate_call_graph(args)
+    elif args.test_landmarks:
+        test_landmarks(args)
 
 if __name__ == '__main__':
     main()

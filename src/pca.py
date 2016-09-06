@@ -133,7 +133,7 @@ def pca(data, mean_values, variance_percentage=90):
         i += 1
 
     n_components = i
-    logger.debug('%s components form %s of the variance', n_components, variance_percentage)
+    logger.debug('%s components form %s% of the variance', n_components, variance_percentage)
 
     return U, s, Vt, n_components
 

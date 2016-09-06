@@ -228,7 +228,8 @@ def sample_from_triangles(src, points2d_src, points2d_dst, triangles, dst):
         )
 
 
-def build_texture_feature_vectors(files, get_image_with_points, mean_points, triangles):
+def build_texture_feature_vectors(
+        files, get_image_with_points, mean_points, triangles):
     """
     Args:
         files (list): list files
@@ -242,15 +243,17 @@ def build_texture_feature_vectors(files, get_image_with_points, mean_points, tri
     mean_texture = []
 
     image, points = get_image_with_points(files[0])
-    mean_points.get_scaled_points(image.shape) # improve this, see issue #1
+    mean_points.get_scaled_points(image.shape)  # improve this, see issue #1
+    actual_shape = mean_points.actual_shape
+
     x, y, w_slice, h_slice = mean_points.get_bounding_box()
 
-    for i, f in enumerate(files):
+    for i, f in enumerate(files[:10]):
         image, points = get_image_with_points(f)
 
         Points = AAMPoints(
             normalized_flattened_points_list=points,
-            actual_shape=(58, 2)
+            actual_shape=actual_shape
         )
 
         # empty colored image

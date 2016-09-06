@@ -1,25 +1,27 @@
 """
 .. module:: datasets
-   :synopsis: Contains imm dataset abstraction layer
+   :synopsis: Contains ibug dataset abstraction layer
 
 
 """
+from time import time
+
 import cv2
 import numpy as np
-import argparse
-import os
 
 import aam
+import landmarks
+from settings import logger
 
 
-class IMMPoints(aam.AAMPoints):
-    SHAPE = (58, 2)
+class IBUGPoints(aam.AAMPoints):
+    SHAPE = (68, 2)
 
-    """Accepts IMM datapoint file which can be shown or used"""
+    """IBUG datapoints abstraction"""
     def __init__(self, filename=None, points_list=None):
         """
         Args:
-            filename: optional .asf file with the imm format
+            filename: optional image file
             points: optional list of x,y points
         """
         assert filename is not None or points_list is not None, 'filename or \
@@ -27,8 +29,15 @@ class IMMPoints(aam.AAMPoints):
 
         self.filename = filename
 
-        if filename:
-            points_list = self.import_file(filename)
+        if self.filename:
+            self.__get_image()
+            self.detector = landmarks.Detector()
+            points_list = self.detector.detect_shape(self.image)[0]
+            points_list = np.asarray(points_list, dtype=np.float32)
+
+            # normalizing data by dividing it by the image
+            points_list[:, 0] /= self.image.shape[1]
+            points_list[:, 1] /= self.image.shape[0]
 
         aam.AAMPoints.__init__(
             self, normalized_flattened_points_list=points_list.flatten(),
@@ -47,14 +56,14 @@ class IMMPoints(aam.AAMPoints):
 
     def __get_image(self):
         """
-        Get the image corresponding to the self.image_file
+        Get the image corresponding to the self.filename
 
         Returns:
             ndarray image
         """
-        assert hasattr(self, 'image_file'), 'image_file name should be set, \
+        assert hasattr(self, 'filename'), 'filename name should be set, \
                 import file must be invoked first'
-        self.image = cv2.imread(self.image_file)
+        self.image = cv2.imread(self.filename)
 
     def get_image(self):
         """
@@ -66,30 +75,6 @@ class IMMPoints(aam.AAMPoints):
             ndarray image
         """
         return self.image
-
-    def import_file(self, filename):
-        """
-        Import an .asf filename. Load the points into a list of points and
-        store the relative path to image file.
-
-        Returns:
-            ndarray(float). Numpy array of landmark locations as stated in the
-            .asf files.
-        """
-        points_list = []
-
-        with open(filename, 'r') as f:
-            lines = f.readlines()
-            data = lines[16:74]
-            dir_name = os.path.dirname(filename)
-            self.image_file = "{}/{}".format(dir_name, lines[-1].strip())
-            self.__get_image()
-
-            for d in data:
-                points_list.append(d.split()[2:4])
-
-        return np.asarray(points_list, dtype='f')
-
 
     def show_on_image(self, image, window_name='image', multiply=True):
         self.draw_triangles(image, self.points_list, multiply=multiply)
@@ -104,8 +89,6 @@ class IMMPoints(aam.AAMPoints):
         self.draw_triangles(image, self.points_list)
 
 
-# TODO: move this to a shared location such that all dataset implementation
-# return an instance of themselves when this function is envoked.
 def factory(**kwargs):
     """
     Returns an instance of the dataset aam extending class
@@ -116,23 +99,26 @@ def factory(**kwargs):
     amounts of landmarks or locations of those landmarks, we just want to use
     them.
     """
-    return IMMPoints(**kwargs)
+    return IBUGPoints(**kwargs)
 
 
 def get_points(files):
     """
     Args:
-        files (array):  Array of .asf full or relative path to .asf files.
+        files (array):  Array of images
 
     Returns:
         ndarray. Array of landmarks.
 
     """
     points = []
+    total_files = len(files)
 
-    for f in files:
-        imm = IMMPoints(filename=f)
-        points.append(imm.get_points())
+    for i, filename in enumerate(files[:10]):
+        t1 = time()
+        ibug = IBUGPoints(filename=filename)
+        points.append(ibug.get_points())
+        logger.debug('processed %s %f, %d/%d', filename, time() - t1, i, total_files)
 
     return np.asarray(points)
 
@@ -147,5 +133,6 @@ def get_image_with_landmarks(filename):
     Returns:
         image, points
     """
-    imm = IMMPoints(filename=filename)
-    return imm.get_image(), imm.get_points()
+    ibug = IBUGPoints(filename=filename)
+
+    return ibug.get_image(), ibug.get_points()
