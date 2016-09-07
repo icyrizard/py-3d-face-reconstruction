@@ -1,4 +1,5 @@
 import json
+import traceback
 import os.path
 import base64
 from glob import glob
@@ -6,6 +7,7 @@ from glob import glob
 import cv2
 import numpy as np
 from tornado import websocket, web, ioloop, autoreload
+
 
 import pca
 from datasets import imm
@@ -30,8 +32,8 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
         self.asf = glob('{}/*.asf'.format(FACE_DB))
 
         # todo get from settings
-        model_texture_file = '{}/pca_texture_model.npy'.format(FILES_DIR)
-        model_shape_file = '{}/pca_shape_model.npy'.format(FILES_DIR)
+        model_texture_file = '{}/pca_ibug_texture_model.npy'.format(FILES_DIR)
+        model_shape_file = '{}/pca_ibug_shape_model.npy'.format(FILES_DIR)
 
         self.shape_model = pca.PCAModel(model_shape_file)
         self.texture_model = pca.PCAModel(model_texture_file)
@@ -63,6 +65,8 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
         image_as_background = message.get('background_image', True)
         shape_components = message.get('shape_components', 58)
         shape_eigenvalues_multiplier = message.get('shape_eigenvalues')
+        #image = message.get('image')
+        #input_image = base64.b64decode(image)
 
         shape_eigenvalues_multiplier = np.asarray(
             shape_eigenvalues_multiplier, dtype=np.float32
@@ -70,13 +74,13 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
 
         logger.info('using %s shape_components', shape_components)
 
-        asf_filename = self.asf[image_index]
+        image_filename = self.images[image_index]
 
-        dataset_module = import_dataset_module(args.shape_type)
-        input_points = imm.IMMPoints(filename=asf_filename)
+        dataset_module = import_dataset_module('ibug')
+        input_points = dataset_module.factory(filename=image_filename)
         input_image = input_points.get_image()
 
-        mean_points = dataset_module.factory(points_list=shape_model.mean_values)
+        mean_points = dataset_module.factory(points_list=self.shape_model.mean_values)
         mean_points.get_scaled_points(input_image.shape)
 
         # set dst image to an empty image if value is None
@@ -86,7 +90,7 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
         else:
             dst_image = input_image
 
-        output_points = imm.IMMPoints(
+        output_points = dataset_module.factory(
             points_list=input_points.get_points()
         )
 
@@ -99,8 +103,7 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
         reconstruction.reconstruct_shape(
             output_points,
             self.shape_model,
-            shape_Vt=shape_Vt,  # overwrite by scaled Vt
-            n_components=shape_components
+            shape_Vt=shape_Vt  # overwrite by scaled Vt
         )
 
         reconstruction.reconstruct_texture(
@@ -131,6 +134,7 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
         for m in message.keys():
             try:
                 handler = getattr(self, self.handlers[m])
+                print handler
                 handler(message[m])
             except (AttributeError, KeyError) as e:
                 msg = 'no handler for {}'.format(m)
@@ -140,6 +144,7 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
                 msg = 'no handler for {}'.format(m)
                 print(msg, e)
                 self.__return_error(msg)
+                traceback.print_exc()
 
     def on_close(self):
         print("WebSocket closed")

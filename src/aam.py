@@ -248,7 +248,7 @@ def build_texture_feature_vectors(
 
     x, y, w_slice, h_slice = mean_points.get_bounding_box()
 
-    for i, f in enumerate(files[:10]):
+    for i, f in enumerate(files):
         image, points = get_image_with_points(f)
 
         Points = AAMPoints(

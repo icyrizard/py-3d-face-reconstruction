@@ -18,7 +18,7 @@ class IBUGPoints(aam.AAMPoints):
     SHAPE = (68, 2)
 
     """IBUG datapoints abstraction"""
-    def __init__(self, filename=None, points_list=None):
+    def __init__(self, filename=None, image=None, points_list=None):
         """
         Args:
             filename: optional image file
@@ -30,7 +30,11 @@ class IBUGPoints(aam.AAMPoints):
         self.filename = filename
 
         if self.filename:
-            self.__get_image()
+            if image is None:
+                self.__get_image()
+            else:
+                self.image = image
+
             self.detector = landmarks.Detector()
             points_list = self.detector.detect_shape(self.image)[0]
             points_list = np.asarray(points_list, dtype=np.float32)
@@ -114,7 +118,7 @@ def get_points(files):
     points = []
     total_files = len(files)
 
-    for i, filename in enumerate(files[:10]):
+    for i, filename in enumerate(files):
         t1 = time()
         ibug = IBUGPoints(filename=filename)
         points.append(ibug.get_points())

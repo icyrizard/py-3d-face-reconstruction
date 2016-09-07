@@ -8,7 +8,9 @@ const ThreeComponent = Ember.Component.extend({
     scene: null,
 
     willRender() {
-        if (this.scene) { return; }
+        if (this.scene) {
+            return;
+        }
 
         var scene = new THREE.Scene();
         var gui = new dat.GUI();

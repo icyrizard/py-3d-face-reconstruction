@@ -79,7 +79,6 @@ export default Ember.Controller.extend({
     getReconstruction: Ember.observer(
             'image_index', 'background_image',
             'shape_components', 'shape_eigenvalues', function() {
-        console.log('updating');
         this.send('getReconstruction');
     }),
 
@@ -91,6 +90,7 @@ export default Ember.Controller.extend({
         getImage(faceModel) {
             this.set('loading', true);
             var filename = faceModel.get('filename');
+
             const socket = this.get('socketRef');
 
             socket.send(
@@ -101,6 +101,7 @@ export default Ember.Controller.extend({
         getReconstruction() {
             this.set('loading', true);
             const socket = this.get('socketRef');
+            console.log(this.get('current_face_base64'));
 
             socket.send(
                 JSON.stringify({
@@ -138,7 +139,7 @@ export default Ember.Controller.extend({
             this.send('getReconstruction');
         },
 
-        resetShapeEigenValues(gui) {
+        resetShapeEigenValues(/*gui*/) {
             this.initShapeEigenValues(15);
         }
     }
