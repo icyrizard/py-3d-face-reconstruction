@@ -31,11 +31,23 @@ def test_detect(image):
 
 
 class Detector():
+    """
+    Use dlib library to detect landmarks in a given image
+    """
     def __init__(self):
         self.detector = dlib.get_frontal_face_detector()
         self.predictor = dlib.shape_predictor(LANDMARK_DETECTOR_PATH)
 
     def detect_faces(self, image):
+        """
+        Detect faces in an image.
+
+        Args:
+            image: np.array
+
+        Returns:
+            array of detection arrays.
+        """
         # The 1 in the second argument indicates that we should upsample the
         # image 1 time.  This will make everything bigger and allow us to
         # detect more faces.

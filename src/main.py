@@ -17,7 +17,7 @@ from utility import import_dataset_module
 
 def save_pca_model_texture(args):
     """
-    save the U, s, Vt and mean of all the asf datafiles given by the asf
+    Save the U, s, Vt and mean of all the asf datafiles given by the asf
     files.
 
     It is saved in the following way:
