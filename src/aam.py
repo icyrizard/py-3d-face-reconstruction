@@ -5,9 +5,9 @@
 
 """
 
+import cv2
 import numpy as np
 from matplotlib.tri import Triangulation
-import cv2
 
 # local imports
 import pca

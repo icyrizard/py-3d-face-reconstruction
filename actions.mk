@@ -1,5 +1,6 @@
 TARGETS += data/pca_shape_train_model.npy
 .PHONY := train_model show_pca test_model show_reconstruction
+DEBUG_LEVEL=*
 
 data/imm_face_db: data/imm_face_db.tar.gz
 	(cd data; mkdir -p imm_face_db; \
@@ -13,38 +14,44 @@ train_shape: data/pca_imm_shape_model.npy data/pca_ibug_shape_model.npy
 data/imm_face_db.tar.gz:
 	(cd data; wget http://www.imm.dtu.dk/~aam/datasets/imm_face_db.tar.gz)
 
+runnit:
+	$(BASE_DOCKER_CMD) python main.py
+
+compile_texture: src/reconstruction/texture.pyx
+	$(BASE_DOCKER_CMD) /bin/bash -c '(cd reconstruction; python setup.py build_ext --inplace)'
+
 data/pca_imm_shape_model.npy:
-	python src/main.py \
+	$(BASE_DOCKER_CMD) python main.py \
 		--save_pca_shape \
 		--files `./scripts/imm_train_set.sh` \
-		--model_shape_file data/pca_imm_shape_model \
+		--model_shape_file /data/pca_imm_shape_model \
 		--shape_type imm
 
 data/pca_ibug_shape_model.npy:
-	python src/main.py \
+	$(BASE_DOCKER_CMD) python main.py \
 		--save_pca_shape \
 		--files `./scripts/ibug_train_set.sh` \
-		--model_shape_file data/pca_ibug_shape_model \
+		--model_shape_file /data/pca_ibug_shape_model \
 		--shape_type ibug
 
 data/pca_ibug_texture_model.npy:
-	python src/main.py \
+	$(BASE_DOCKER_CMD) python main.py \
 		--save_pca_texture \
 		--files `./scripts/ibug_train_set.sh` \
-		--model_texture_file data/pca_ibug_texture_model \
-		--model_shape_file data/pca_ibug_shape_model.npy \
+		--model_texture_file /data/pca_ibug_texture_model \
+		--model_shape_file /data/pca_ibug_shape_model.npy \
 		--shape_type ibug
 
 data/pca_imm_texture_model.npy:
-	python src/main.py \
+	$(BASE_DOCKER_CMD) python main.py \
 		--save_pca_texture \
 		--files `./scripts/imm_train_set.sh` \
-		--model_texture_file data/pca_imm_texture_model \
-		--model_shape_file data/pca_imm_shape_model.npy \
+		--model_texture_file /data/pca_imm_texture_model \
+		--model_shape_file /data/pca_imm_shape_model.npy \
 		--shape_type imm
 
 test_model:
-	python src/main.py \
+	$(BASE_DOCKER_CMD) python main.py \
 		--reconstruct \
 		--files `./scripts/imm_test_set.sh` \
 		--model_texture_file data/pca_imm_texture_model \
@@ -52,11 +59,11 @@ test_model:
 		--n_components 6
 
 show_reconstruction:
-	python src/main.py \
+	$(BASE_DOCKER_CMD) python main.py \
 		--reconstruct \
 		--files data/imm_face_db/*.asf \
-		--model_texture_file data/pca_imm_texture_model.npy \
-		--model_shape_file data/pca_imm_shape_model.npy \
+		--model_texture_file /data/pca_imm_texture_model.npy \
+		--model_shape_file /data/pca_imm_shape_model.npy \
 		--shape_type imm \
 		--n_components 6
 
@@ -98,7 +105,7 @@ test:
 
 .PHONY:= server
 server:
-	(cd src/; python -m tornado.autoreload server.py)
+	#(cd src/; python -m tornado.autoreload server.py)
 
 .PHONY:= ember
 ember:
