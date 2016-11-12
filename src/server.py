@@ -15,8 +15,7 @@ from reconstruction import reconstruction
 from settings import logger
 from utility import import_dataset_module
 
-BASE = '../viewer/app'
-FILES_DIR = '../data/'
+FILES_DIR = '/data/'
 FACE_DB_NAME = 'imm_face_db'
 FACE_DB = '{}{}'.format(FILES_DIR, FACE_DB_NAME)
 

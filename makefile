@@ -1,18 +1,12 @@
-#VIRTUALENV := venv
-#PYTHON := python2.7
-#PYTHON_BIN_PATH := /usr/local/bin/$(PYTHON)
-#SITE_PACKAGES := $(VIRTUALENV)/lib/$(PYTHON)/site-packages
-#OPENCV := $(SITE_PACKAGES)/cv.py $(SITE_PACKAGES)/cv2.so
-#TARGETS := $(OPENCV) $(VIRTUALENV) data reconstruction
-
+DEBUG:=1
 VERSION:=v0.1
 IMAGE_TAG:= icyrizard/face-reconstruction.git:$(VERSION)
-DEBUG:=1
 BASE_DOCKER_CMD:= docker run \
 	--rm \
 	--volume /Users/richard/Documents/sighthub/face-reconstruction/data:/data \
 	--volume /Users/richard/Documents/sighthub/face-reconstruction/src:/src \
 	-e "DEBUG=$(DEBUG)" \
+	-p 8888:8888 \
 	$(IMAGE_TAG)
 
 include actions.mk
@@ -27,10 +21,6 @@ OS := $(shell uname)
 
 build: requirements.txt
 	docker build -t $(IMAGE_TAG) .
-
-#@(source $(VIRTUALENV)/bin/activate; \
-#	pip install -r requirements.txt; \
-#);
 
 run-bash:
 	$(BASE_DOCKER_CMD) --interactive --tty $(IMAGE_TAG) /bin/bash

@@ -68,7 +68,7 @@ show_reconstruction:
 		--n_components 6
 
 show_ibug:
-	python src/main.py \
+	$(BASE_DOCKER_CMD) python main.py \
 		--reconstruct \
 		--files data/imm_face_db/*.jpg\
 		--model_texture_file data/pca_ibug_texture_model.npy \
@@ -76,7 +76,7 @@ show_ibug:
 		--shape_type ibug
 
 profile_reconstruction:
-	python -m cProfile src/main.py \
+	$(BASE_DOCKER_CMD) python -m cProfile main.py \
 		--reconstruct \
 		--files data/imm_face_db/*.asf \
 		--model_texture_file data/pca_imm_texture_model.npy \
@@ -85,7 +85,7 @@ profile_reconstruction:
 		--n_components 6
 
 graph_reconstruction:
-	python ./src/main.py \
+	$(BASE_DOCKER_CMD) python main.py \
 		--generate_call_graph \
 		--files data/imm_face_db/*.asf \
 		--model_texture_file data/pca_imm_texture_model.npy \
@@ -95,7 +95,7 @@ graph_reconstruction:
 
 
 test_landmarks:
-	./src/main.py \
+	$(BASE_DOCKER_CMD) python main.py \
 		--test_landmarks \
 		--image data/test_data/lenna.jpg
 
@@ -105,7 +105,7 @@ test:
 
 .PHONY:= server
 server:
-	#(cd src/; python -m tornado.autoreload server.py)
+	$(BASE_DOCKER_CMD) python -m tornado.autoreload server.py
 
 .PHONY:= ember
 ember:
