@@ -32,6 +32,9 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
         self.images = glob('{}/*.jpg'.format(FACE_DB))
         self.asf = glob('{}/*.asf'.format(FACE_DB))
 
+        self.images.sort()
+        self.asf.sort()
+
         # todo get from settings
         model_texture_file = '{}/pca_{}_texture_model.npy'.format(
             FILES_DIR, DATASET)
@@ -55,7 +58,7 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
         return True
 
     def open(self):
-        print("WebSocket opened")
+        logger.info("Websocket opened")
 
     def __return_error(self, message):
         self.write_message(json.dumps(
@@ -123,6 +126,9 @@ class ApiHandler(web.RequestHandler):
     def __init__(self, *args, **kwargs):
         self.images = glob('{}/*.jpg'.format(FACE_DB))
         self.asf_files = glob('{}/*.asf'.format(FACE_DB))
+        self.images.sort()
+        self.asf_files.sort()
+
         web.RequestHandler.__init__(self, *args, **kwargs)
 
     def set_default_headers(self):
