@@ -20,6 +20,7 @@ runnit:
 src/reconstruction/texture.so: src/reconstruction/texture.pyx
 	$(BASE_DOCKER_CMD) /bin/bash -c '(cd reconstruction; python setup.py build_ext --inplace)'
 
+## IMM Dataset
 data/pca_imm_shape_model.npy:
 	$(BASE_DOCKER_CMD) python main.py \
 		--save_pca_shape \
@@ -27,6 +28,16 @@ data/pca_imm_shape_model.npy:
 		--model_shape_file /data/pca_imm_shape_model \
 		--shape_type imm
 
+data/pca_imm_texture_model.npy:
+	$(BASE_DOCKER_CMD) python main.py \
+		--save_pca_texture \
+		--files `./scripts/imm_train_set.sh` \
+		--model_texture_file /data/pca_imm_texture_model \
+		--model_shape_file /data/pca_imm_shape_model.npy \
+		--shape_type imm
+## END OF IMM
+
+## IBUG using dlib landmark detector
 data/pca_ibug_shape_model.npy:
 	$(BASE_DOCKER_CMD) python main.py \
 		--save_pca_shape \
@@ -41,14 +52,8 @@ data/pca_ibug_texture_model.npy:
 		--model_texture_file /data/pca_ibug_texture_model \
 		--model_shape_file /data/pca_ibug_shape_model.npy \
 		--shape_type ibug
+## END OF IBUG
 
-data/pca_imm_texture_model.npy:
-	$(BASE_DOCKER_CMD) python main.py \
-		--save_pca_texture \
-		--files `./scripts/imm_train_set.sh` \
-		--model_texture_file /data/pca_imm_texture_model \
-		--model_shape_file /data/pca_imm_shape_model.npy \
-		--shape_type imm
 
 test_model:
 	$(BASE_DOCKER_CMD) python main.py \
@@ -105,7 +110,9 @@ test:
 
 .PHONY:= server
 server:
-	$(BASE_DOCKER_CMD) python -m tornado.autoreload server.py
+	docker run $(DOCKER_RUN_FLAGS) $(EXTRA_FLAGS) \
+		-p 6930:8888 $(IMAGE_TAG) \
+		python -m tornado.autoreload server.py
 
 .PHONY:= ember
 ember:
@@ -113,4 +120,4 @@ ember:
 
 .PHONY:= ctags
 ctags:
-	ctags -R --python-kinds=-i src
+	ctags --python-kinds=-i src

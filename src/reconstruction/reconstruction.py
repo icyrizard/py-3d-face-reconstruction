@@ -3,45 +3,7 @@ import numpy as np
 
 import pca
 import aam
-
-
-def cartesian2barycentric(r1, r2, r3, r):
-    """
-    Given a triangle spanned by three cartesion points
-    r1, r2, r2, and point r, return the barycentric weights l1, l2, l3.
-
-    Returns:
-        ndarray (of dim 3) weights of the barycentric coordinates
-
-    """
-    x, y = r
-    x1, y1 = r1
-    x2, y2 = r2
-    x3, y3 = r3
-
-    a = np.array([[x1, x2, x3], [y1, y2, y3], [1, 1, 1]])
-    b = np.array([x, y, 1])
-
-    return np.linalg.solve(a, b)
-
-
-def barycentric2cartesian(r1, r2, r3, L):
-    """
-    Given the barycentric weights in L, and cartesian r1, r2, r3 coordinates of
-    points that span the triangle, return the cartesian coordinate of the
-    points that is located at the weights of L.
-
-    Returns:
-        ndarray [x,y] cartesian points.
-    """
-    x1, y1 = r1
-    x2, y2 = r2
-    x3, y3 = r3
-
-    a = np.array([[x1, x2, x3], [y1, y2, y3], [1, 1, 1]])
-    b = np.array(L)
-
-    return np.asarray(np.dot(a, b), dtype=np.uint32)
+from utility import import_dataset_module
 
 
 def draw_shape(image, points, triangles, multiply=True):
@@ -173,3 +135,60 @@ def reconstruct_texture(src_image, dst_image, texture_model,
         triangles,
         dst_image
     )
+
+
+def reconstruct_shape_texture(dataset_name, shape_model, texture_model,
+                              image_filename, shape_components,
+                              shape_eigenvalues_multiplier=[],
+                              image_as_background=False):
+    """Reconstructs shape and texture"""
+    dataset_module = import_dataset_module(dataset_name)
+    input_points = dataset_module.factory(filename=image_filename)
+    input_image = input_points.get_image()
+
+    mean_points = dataset_module.factory(points_list=shape_model.mean_values)
+    mean_points.get_scaled_points(input_image.shape)
+
+    shape_eigenvalues_multiplier = np.asarray(
+        shape_eigenvalues_multiplier, dtype=np.float32
+    )
+
+    # set dst image to an empty image if value is None
+    if image_as_background is False:
+        h, w, _ = input_image.shape
+        dst_image = np.full((h, w, 3), fill_value=0, dtype=np.uint8)
+    else:
+        dst_image = input_image
+
+    # get the location of the landmarks in a list of [x,y, ... x_n, y_n]
+    output_points = dataset_module.factory(
+        points_list=input_points.get_points()
+    )
+
+    # get the pca components (ie., V^T)
+    shape_Vt = shape_model.Vt
+
+    # if a eigen value multiplier array is given, scale the Vt with this.
+    # the chosen PCA components will have more impact then others.
+    if len(shape_eigenvalues_multiplier):
+        shape_Vt = scale_eigenvalues(shape_Vt, shape_eigenvalues_multiplier)
+
+    # recontruct the shape
+    reconstruct_shape(
+        output_points,
+        shape_model,
+        shape_Vt=shape_Vt  # overwrite by scaled Vt
+    )
+
+    reconstruct_texture(
+        input_image,  # src image
+        dst_image,  # dst image
+        texture_model,
+        input_points,  # shape points input
+        mean_points,   # shape points mean
+        output_points
+    )
+
+    # output_points.draw_triangles(image=dst_image, show_points=False)
+
+    return dst_image

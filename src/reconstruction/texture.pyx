@@ -118,42 +118,6 @@ cdef inline np.ndarray[double, ndim=2] barycentric2cartesian(
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def fill_triangle(np.ndarray[unsigned char, ndim=3] src,
-                  np.ndarray[unsigned char, ndim=3] dst,
-                  int x1, int y1, int x2, int y2, int x3, int y3):
-    """
-    Fill a triangle by applying the Barycentric Algorithm for deciding if a
-    point lies inside or outside a triangle.
-    """
-
-    # Get the bounding box of the triangle
-    cdef int x_min = min(x1, min(x2, x3))
-    cdef int x_max = max(x1, max(x2, x3))
-    cdef int y_min = min(y1, min(y2, y3))
-    cdef int y_max = max(y1, max(y2, y3))
-
-    cdef int w = x_max - x_min
-    cdef int h = y_max - y_min
-    cdef int new_offset
-
-    cdef c_array.array dst_loc = c_array.array('f', [0., 0., 0.])
-
-    for j, y in enumerate(xrange(y_min, y_max)):
-        for i, x in enumerate(xrange(x_min, x_max)):
-            cartesian2barycentric(
-                x1, y1, x2, y2, x3, y3, x, y, dst_loc
-            )
-
-            s = dst_loc[0]
-            t = dst_loc[1]
-
-            # In or out the triangle (with a soft margin)
-            if s >= -0.01 and t >= -0.01 and s + t <= 1.001:
-                dst[y, x, :] = src[y, x, :]
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
 def fill_triangle_src_dst(np.ndarray[unsigned char, ndim=3] src,
                           np.ndarray[unsigned char, ndim=3] dst,
                           int src_x1, int src_y1, int src_x2, int src_y2,
@@ -177,10 +141,16 @@ def fill_triangle_src_dst(np.ndarray[unsigned char, ndim=3] src,
     cdef int y_min = np.argmin(triangle_y)
     cdef int y_max = np.argmax(triangle_y)
 
+    cdef int src_max_dim_x = src.shape[1]
+    cdef int src_max_dim_y = src.shape[0]
+
+    cdef int dst_max_dim_x = dst.shape[1]
+    cdef int dst_max_dim_y = dst.shape[0]
+
     # walk over x and y values of this bounding box see if the
     # pixel is in or out the boudning box
-    for y in xrange(triangle_y[y_min] + 1, triangle_y[y_max] - 1):
-        for x in xrange(triangle_x[x_min] + 1, triangle_x[x_max] - 1):
+    for y in xrange(triangle_y[y_min], triangle_y[y_max]):
+        for x in xrange(triangle_x[x_min], triangle_x[x_max]):
             cartesian2barycentric(
                 triangle_x[0], triangle_y[0],
                 triangle_x[1], triangle_y[1],
@@ -192,11 +162,66 @@ def fill_triangle_src_dst(np.ndarray[unsigned char, ndim=3] src,
             t = dst_loc[1]
 
             # In or out the triangle (with a soft margin)
-            if s >= -0.01 and t >= -0.01 and s + t <= 1.001:
+            if s >= -0.01 and t >= -0.01 and s + t <= 1.01:
                 barycentric2cartesian(
                     src_x1, src_x2, src_x3,
                     src_y1, src_y2, src_y3,
                     dst_loc, src_loc
                 )
 
-                dst[y, x, :] = src[src_loc[1], src_loc[0], :]
+                #max_dim_y:  188 104.592903137 316 True
+                #max_dim_x:  201 188.147247314 357 True
+                #IndexError: index 188 is out of bounds for axis 1 with size 188
+                #print 'max_dim_y: ', max_dim_y, src_loc[1], y, src_loc[1] < max_dim_y
+                #print 'max_dim_x: ', max_dim_x, src_loc[0], x, src_loc[0] < max_dim_x
+                #print 'together:', src_loc[1] < max_dim_y and src_loc[0] < max_dim_x
+
+                #if src_loc[1] < src_max_dim_y and src_loc[0] < src_max_dim_x:
+                #    print 'yo'
+                #    print src_loc[1], src_loc[0]
+                #    print y, x
+                #    print dst_max_dim_y
+                #    print dst_max_dim_x
+                #    print src_max_dim_y
+                #    print src_max_dim_x
+
+                if src_loc[1] < src_max_dim_y and src_loc[0] < src_max_dim_x \
+                        and y < dst_max_dim_y and x < dst_max_dim_x:
+                    dst[y, x, :] = src[src_loc[1], src_loc[0], :]
+
+
+#@cython.boundscheck(False)
+#@cython.wraparound(False)
+#def fill_triangle(np.ndarray[unsigned char, ndim=3] src,
+#                  np.ndarray[unsigned char, ndim=3] dst,
+#                  int x1, int y1, int x2, int y2, int x3, int y3):
+#    """
+#    Fill a triangle by applying the Barycentric Algorithm for deciding if a
+#    point lies inside or outside a triangle.
+#    """
+#
+#    # Get the bounding box of the triangle
+#    cdef int x_min = min(x1, min(x2, x3))
+#    cdef int x_max = max(x1, max(x2, x3))
+#    cdef int y_min = min(y1, min(y2, y3))
+#    cdef int y_max = max(y1, max(y2, y3))
+#
+#    cdef int w = x_max - x_min
+#    cdef int h = y_max - y_min
+#    cdef int new_offset
+#
+#    cdef c_array.array dst_loc = c_array.array('f', [0., 0., 0.])
+#
+#    for j, y in enumerate(xrange(y_min, y_max)):
+#        for i, x in enumerate(xrange(x_min, x_max)):
+#            cartesian2barycentric(
+#                x1, y1, x2, y2, x3, y3, x, y, dst_loc
+#            )
+#
+#            s = dst_loc[0]
+#            t = dst_loc[1]
+#
+#            # In or out the triangle (with a soft margin)
+#            if s >= -0.01 and t >= -0.01 and s + t <= 1.01:
+#                dst[y, x, :] = src[y, x, :]
+#

@@ -1,3 +1,4 @@
+import os
 import json
 import traceback
 import os.path
@@ -8,16 +9,17 @@ import cv2
 import numpy as np
 from tornado import websocket, web, ioloop, autoreload
 
-
 import pca
 from datasets import imm
 from reconstruction import reconstruction
 from settings import logger
 from utility import import_dataset_module
 
+
 FILES_DIR = '/data/'
 FACE_DB_NAME = 'imm_face_db'
 FACE_DB = '{}{}'.format(FILES_DIR, FACE_DB_NAME)
+DATASET = os.environ.get('DATASET', 'ibug')  # see src/datasets for options
 
 
 class ImageWebSocketHandler(websocket.WebSocketHandler):
@@ -31,8 +33,10 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
         self.asf = glob('{}/*.asf'.format(FACE_DB))
 
         # todo get from settings
-        model_texture_file = '{}/pca_ibug_texture_model.npy'.format(FILES_DIR)
-        model_shape_file = '{}/pca_ibug_shape_model.npy'.format(FILES_DIR)
+        model_texture_file = '{}/pca_{}_texture_model.npy'.format(
+            FILES_DIR, DATASET)
+        model_shape_file = '{}/pca_{}_shape_model.npy'.format(
+            FILES_DIR, DATASET)
 
         self.shape_model = pca.PCAModel(model_shape_file)
         self.texture_model = pca.PCAModel(model_texture_file)
@@ -67,54 +71,22 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
         #image = message.get('image')
         #input_image = base64.b64decode(image)
 
-        shape_eigenvalues_multiplier = np.asarray(
-            shape_eigenvalues_multiplier, dtype=np.float32
-        )
-
         logger.info('using %s shape_components', shape_components)
 
-        image_filename = self.images[image_index]
-
-        dataset_module = import_dataset_module('ibug')
-        input_points = dataset_module.factory(filename=image_filename)
-        input_image = input_points.get_image()
-
-        mean_points = dataset_module.factory(points_list=self.shape_model.mean_values)
-        mean_points.get_scaled_points(input_image.shape)
-
-        # set dst image to an empty image if value is None
-        if image_as_background is False:
-            h, w, _ = input_image.shape
-            dst_image = np.full((h, w, 3), fill_value=0, dtype=np.uint8)
+        if DATASET == 'imm':
+            image_filename = self.asf[image_index]
         else:
-            dst_image = input_image
+            image_filename = self.images[image_index]
 
-        output_points = dataset_module.factory(
-            points_list=input_points.get_points()
-        )
-
-        shape_Vt = self.shape_model.Vt
-        shape_Vt = reconstruction.scale_eigenvalues(
-            shape_Vt, shape_eigenvalues_multiplier
-        )
-
-        # recontruct the shape
-        reconstruction.reconstruct_shape(
-            output_points,
+        dst_image = reconstruction.reconstruct_shape_texture(
+            DATASET,
             self.shape_model,
-            shape_Vt=shape_Vt  # overwrite by scaled Vt
-        )
-
-        reconstruction.reconstruct_texture(
-            input_image,  # src image
-            dst_image,  # dst image
             self.texture_model,
-            input_points,  # shape points input
-            mean_points,   # shape points mean
-            output_points
+            image_filename,
+            shape_components,
+            shape_eigenvalues_multiplier,
+            image_as_background=image_as_background
         )
-
-        output_points.draw_triangles(image=dst_image, show_points=False)
 
         _, reconstructed = cv2.imencode('.jpg', dst_image)
         reconstructed = base64.b64encode(reconstructed)
@@ -165,16 +137,20 @@ class ApiHandler(web.RequestHandler):
 class FaceHandler(ApiHandler):
     @web.asynchronous
     def get(self, *args):
+        """
+        Get's all faces in the given FACE_DB and returns the url to be able
+        to do requests with it in the webapplication.
+        """
         data = []
 
         for id, filename in enumerate(self.asf_files):
-            Points = imm.IMMPoints(filename)
             data.append({
                 'type': 'faces',
                 'id': id,
                 'attributes': {
-                    'filename': '{}/{}'.format(FACE_DB_NAME, os.path.basename(self.images[id])),
-                    'shape': Points.get_scaled_points((480, 640)).tolist()
+                    'filename': '{}/{}'.format(
+                        FACE_DB_NAME, os.path.basename(self.images[id])
+                    ),
                 }
             })
 
