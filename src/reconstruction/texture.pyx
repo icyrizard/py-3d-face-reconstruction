@@ -169,22 +169,6 @@ def fill_triangle_src_dst(np.ndarray[unsigned char, ndim=3] src,
                     dst_loc, src_loc
                 )
 
-                #max_dim_y:  188 104.592903137 316 True
-                #max_dim_x:  201 188.147247314 357 True
-                #IndexError: index 188 is out of bounds for axis 1 with size 188
-                #print 'max_dim_y: ', max_dim_y, src_loc[1], y, src_loc[1] < max_dim_y
-                #print 'max_dim_x: ', max_dim_x, src_loc[0], x, src_loc[0] < max_dim_x
-                #print 'together:', src_loc[1] < max_dim_y and src_loc[0] < max_dim_x
-
-                #if src_loc[1] < src_max_dim_y and src_loc[0] < src_max_dim_x:
-                #    print 'yo'
-                #    print src_loc[1], src_loc[0]
-                #    print y, x
-                #    print dst_max_dim_y
-                #    print dst_max_dim_x
-                #    print src_max_dim_y
-                #    print src_max_dim_x
-
                 if src_loc[1] < src_max_dim_y and src_loc[0] < src_max_dim_x \
                         and y < dst_max_dim_y and x < dst_max_dim_x:
                     dst[y, x, :] = src[src_loc[1], src_loc[0], :]

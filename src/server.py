@@ -70,8 +70,6 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
         image_as_background = message.get('background_image', True)
         shape_components = message.get('shape_components', 58)
         shape_eigenvalues_multiplier = message.get('shape_eigenvalues')
-        #image = message.get('image')
-        #input_image = base64.b64decode(image)
 
         logger.info('using %s shape_components', shape_components)
 

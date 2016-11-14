@@ -160,7 +160,7 @@ def reconstruct_shape_texture(dataset_name, shape_model, texture_model,
     else:
         dst_image = input_image
 
-    # get the location of the landmarks in a list of [x,y, ... x_n, y_n]
+    # get the location of the landmarks in a list of [x, y, ..., x_n, y_n]
     output_points = dataset_module.factory(
         points_list=input_points.get_points()
     )
@@ -168,7 +168,7 @@ def reconstruct_shape_texture(dataset_name, shape_model, texture_model,
     # get the pca components (ie., V^T)
     shape_Vt = shape_model.Vt
 
-    # if a eigen value multiplier array is given, scale the Vt with this.
+    # if an eigen value multiplier array is given, scale the Vt with this.
     # the chosen PCA components will have more impact then others.
     if len(shape_eigenvalues_multiplier):
         shape_Vt = scale_eigenvalues(shape_Vt, shape_eigenvalues_multiplier)
@@ -177,6 +177,7 @@ def reconstruct_shape_texture(dataset_name, shape_model, texture_model,
     reconstruct_shape(
         output_points,
         shape_model,
+        n_components=shape_components,
         shape_Vt=shape_Vt  # overwrite by scaled Vt
     )
 
