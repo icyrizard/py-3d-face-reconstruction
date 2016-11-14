@@ -1,21 +1,27 @@
 DEBUG:=1
 VERSION:=v0.1
 IMAGE_TAG:= icyrizard/face-reconstruction.git:$(VERSION)
-BASE_DOCKER_CMD:= docker run \
-	--rm \
-	--volume /Users/richard/Documents/sighthub/face-reconstruction/data:/data \
-	--volume /Users/richard/Documents/sighthub/face-reconstruction/src:/src \
+HERE:=$(shell pwd)
+DOCKER_RUN_FLAGS:= --rm \
+	--volume $(HERE)/data:/data \
+	--volume $(HERE)/src:/src \
 	-e "DEBUG=$(DEBUG)" \
-	-p 8888:8888 \
-	$(IMAGE_TAG)
+	-p 6930:8888
+
+BASE_DOCKER_CMD:= docker run $(DOCKER_RUN_FLAGS) $(IMAGE_TAG)
+
+$(info $(TARGETS))
+
+DEPENDENCIES:= data/imm_face_db
+TARGETS:= shape_predictor_68_face_landmarks.dat\
+	src/reconstruction/texture.so \
+	data/pca_ibug_shape_model.npy \
+	data/pca_ibug_texture_model.npy
+
+all: $(DEPENDENCIES) $(TARGETS)
 
 include actions.mk
 include src/reconstruction/build.mk
-
-all: $(TARGETS)
-
-data: data/imm_face_db
-reconstruction: texture.so
 
 OS := $(shell uname)
 
@@ -23,7 +29,7 @@ build: requirements.txt
 	docker build -t $(IMAGE_TAG) .
 
 run-bash:
-	$(BASE_DOCKER_CMD) --interactive --tty $(IMAGE_TAG) /bin/bash
+	docker run --interactive --tty $(DOCKER_RUN_FLAGS) $(IMAGE_TAG) /bin/bash
 
 $(VIRTUALENV):
 	virtualenv -p $(PYTHON_BIN_PATH) venv

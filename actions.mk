@@ -1,15 +1,14 @@
-TARGETS += data/pca_shape_train_model.npy
 .PHONY := train_model show_pca test_model show_reconstruction
 DEBUG_LEVEL=*
 
 data/imm_face_db: data/imm_face_db.tar.gz
 	(cd data; mkdir -p imm_face_db; \
-		tar -xvzf imm_face_db.tar.gz -C imm_face_db
+		tar -xvzf imm_face_db.tar.gz -C imm_face_db \
 	)
 
-train_model: train_shape train_texture
-train_texture: data/pca_imm_texture_model.npy data/pca_ibug_texture_model.npy
-train_shape: data/pca_imm_shape_model.npy data/pca_ibug_shape_model.npy
+shape_predictor_68_face_landmarks.dat:
+	wget http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2 -P data/
+	(cd data/; bzip2 -d shape_predictor_68_face_landmarks.dat.bz2)
 
 data/imm_face_db.tar.gz:
 	(cd data; wget http://www.imm.dtu.dk/~aam/datasets/imm_face_db.tar.gz)
@@ -17,7 +16,8 @@ data/imm_face_db.tar.gz:
 runnit:
 	$(BASE_DOCKER_CMD) python main.py
 
-compile_texture: src/reconstruction/texture.pyx
+
+src/reconstruction/texture.so: src/reconstruction/texture.pyx
 	$(BASE_DOCKER_CMD) /bin/bash -c '(cd reconstruction; python setup.py build_ext --inplace)'
 
 data/pca_imm_shape_model.npy:

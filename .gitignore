@@ -7,3 +7,4 @@ src/reconstruction/*.c
 src/reconstruction/build/
 *.dSYM
 vendor/*
+*.pyc

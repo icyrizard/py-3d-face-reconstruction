@@ -1,4 +1,5 @@
 HERE := $(shell pwd)
+TARGETS += src/reconstruction/texture.so
 
 ifeq ($(OS),Darwin)
 HALIDE_LINK:=https://github.com/halide/Halide/releases/download/release_2016_04_27/halide-mac-64-trunk-2f11b9fce62f596e832907b82d87e8f75c53dd07.tgz

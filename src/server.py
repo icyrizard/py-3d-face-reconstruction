@@ -194,7 +194,7 @@ app = web.Application([
 
 
 if __name__ == '__main__':
-    app.listen(8888)
+    app.listen(8888, xheaders=True)
     ioloop = ioloop.IOLoop.instance()
     autoreload.start(ioloop)
     ioloop.start()
