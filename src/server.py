@@ -21,6 +21,11 @@ FACE_DB_NAME = 'imm_face_db'
 FACE_DB = '{}{}'.format(FILES_DIR, FACE_DB_NAME)
 DATASET = os.environ.get('DATASET', 'ibug')  # see src/datasets for options
 
+images = glob('{}/*.jpg'.format(FACE_DB))
+images.sort()
+asf = glob('{}/*.asf'.format(FACE_DB))
+asf.sort()
+
 
 class ImageWebSocketHandler(websocket.WebSocketHandler):
     handlers = {
@@ -29,12 +34,6 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
     }
 
     def __init__(self, *args, **kwargs):
-        self.images = glob('{}/*.jpg'.format(FACE_DB))
-        self.asf = glob('{}/*.asf'.format(FACE_DB))
-
-        self.images.sort()
-        self.asf.sort()
-
         # todo get from settings
         model_texture_file = '{}/pca_{}_texture_model.npy'.format(
             FILES_DIR, DATASET)
@@ -77,9 +76,9 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
         logger.info('using %s shape_components', shape_components)
 
         if DATASET == 'imm':
-            image_filename = self.asf[image_index]
+            image_filename = asf[image_index]
         else:
-            image_filename = self.images[image_index]
+            image_filename = images[image_index]
 
         dst_image = reconstruction.reconstruct_shape_texture(
             DATASET,
@@ -126,11 +125,6 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
 
 class ApiHandler(web.RequestHandler):
     def __init__(self, *args, **kwargs):
-        self.images = glob('{}/*.jpg'.format(FACE_DB))
-        self.asf_files = glob('{}/*.asf'.format(FACE_DB))
-        self.images.sort()
-        self.asf_files.sort()
-
         web.RequestHandler.__init__(self, *args, **kwargs)
 
     def set_default_headers(self):
@@ -149,13 +143,13 @@ class FaceHandler(ApiHandler):
         """
         data = []
 
-        for id, filename in enumerate(self.asf_files):
+        for id, filename in enumerate(asf):
             data.append({
                 'type': 'faces',
                 'id': id,
                 'attributes': {
                     'filename': '{}/{}'.format(
-                        FACE_DB_NAME, os.path.basename(self.images[id])
+                        FACE_DB_NAME, os.path.basename(images[id])
                     ),
                 }
             })
