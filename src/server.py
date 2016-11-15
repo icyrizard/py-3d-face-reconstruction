@@ -85,7 +85,7 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
             self.texture_model,
             image_filename,
             shape_components,
-            shape_eigenvalues_multiplier,
+            shape_eigenvalues_multiplier=shape_eigenvalues_multiplier,
             image_as_background=image_as_background
         )
 
@@ -136,7 +136,6 @@ class ApiHandler(web.RequestHandler):
         self.set_header("Access-Control-Allow-Headers", "x-requested-with")
         self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
         self.set_header("Content-Type", 'application/vnd.api+json')
-
 
 class FaceHandler(ApiHandler):
     @web.asynchronous
