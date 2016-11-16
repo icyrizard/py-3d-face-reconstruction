@@ -14,12 +14,16 @@ from datasets import imm
 from reconstruction import reconstruction
 from settings import logger
 from utility import import_dataset_module
+from time import time
 
 
 FILES_DIR = '/data/'
 FACE_DB_NAME = 'imm_face_db'
 FACE_DB = '{}{}'.format(FILES_DIR, FACE_DB_NAME)
 DATASET = os.environ.get('DATASET', 'ibug')  # see src/datasets for options
+
+# load correct module to support the dataset
+dataset_module = import_dataset_module(DATASET)
 
 
 class ImageWebSocketHandler(websocket.WebSocketHandler):
@@ -74,13 +78,15 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
 
         logger.info('using %s shape_components', shape_components)
 
+        t1 = time()
+
         if DATASET == 'imm':
             image_filename = self.asf[image_index]
         else:
             image_filename = self.images[image_index]
 
         dst_image = reconstruction.reconstruct_shape_texture(
-            DATASET,
+            dataset_module,
             self.shape_model,
             self.texture_model,
             image_filename,
@@ -88,6 +94,8 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
             shape_eigenvalues_multiplier=shape_eigenvalues_multiplier,
             image_as_background=image_as_background
         )
+
+        logger.info('Time elapsed : %s sec', time() - t1)
 
         _, reconstructed = cv2.imencode('.jpg', dst_image)
         reconstructed = base64.b64encode(reconstructed)

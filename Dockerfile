@@ -1,5 +1,6 @@
-FROM smvanveen/computer-vision:20160120173546
-RUN pip install dlib
+FROM smvanveen/computer-vision:20161109143812
+RUN git clone https://github.com/davisking/dlib.git
+RUN (cd dlib; python setup.py install --yes USE_AVX_INSTRUCTIONS)
 WORKDIR /src
 
 #COPY requirements.txt /tmp

@@ -13,6 +13,9 @@ import aam
 import landmarks
 from settings import logger
 
+# load detector (this loads the datafile from disk, so needs to be done once).
+detector = landmarks.Detector()
+
 
 class IBUGPoints(aam.AAMPoints):
     SHAPE = (68, 2)
@@ -35,8 +38,7 @@ class IBUGPoints(aam.AAMPoints):
             else:
                 self.image = image
 
-            self.detector = landmarks.Detector()
-            points_list = self.detector.detect_shape(self.image)[0]
+            points_list = detector.detect_shape(self.image)[0]
             points_list = np.asarray(points_list, dtype=np.float32)
 
             # normalizing data by dividing it by the image

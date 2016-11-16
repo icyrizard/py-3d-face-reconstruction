@@ -137,12 +137,11 @@ def reconstruct_texture(src_image, dst_image, texture_model,
     )
 
 
-def reconstruct_shape_texture(dataset_name, shape_model, texture_model,
+def reconstruct_shape_texture(dataset_module, shape_model, texture_model,
                               image_filename, shape_components,
                               shape_eigenvalues_multiplier=[],
                               image_as_background=False):
     """Reconstructs shape and texture"""
-    dataset_module = import_dataset_module(dataset_name)
     input_points = dataset_module.factory(filename=image_filename)
     input_image = input_points.get_image()
 
@@ -190,6 +189,6 @@ def reconstruct_shape_texture(dataset_name, shape_model, texture_model,
         output_points
     )
 
-    # output_points.draw_triangles(image=dst_image, show_points=False)
+    output_points.draw_triangles(image=dst_image, show_points=False)
 
     return dst_image
