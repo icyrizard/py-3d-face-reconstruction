@@ -25,6 +25,11 @@ DATASET = os.environ.get('DATASET', 'ibug')  # see src/datasets for options
 # load correct module to support the dataset
 dataset_module = import_dataset_module(DATASET)
 
+images = glob('{}/*.jpg'.format(FACE_DB))
+images.sort()
+asf = glob('{}/*.asf'.format(FACE_DB))
+asf.sort()
+
 
 class ImageWebSocketHandler(websocket.WebSocketHandler):
     handlers = {
@@ -33,12 +38,6 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
     }
 
     def __init__(self, *args, **kwargs):
-        self.images = glob('{}/*.jpg'.format(FACE_DB))
-        self.asf = glob('{}/*.asf'.format(FACE_DB))
-
-        self.images.sort()
-        self.asf.sort()
-
         # todo get from settings
         model_texture_file = '{}/pca_{}_texture_model.npy'.format(
             FILES_DIR, DATASET)
@@ -81,9 +80,9 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
         t1 = time()
 
         if DATASET == 'imm':
-            image_filename = self.asf[image_index]
+            image_filename = asf[image_index]
         else:
-            image_filename = self.images[image_index]
+            image_filename = images[image_index]
 
         dst_image = reconstruction.reconstruct_shape_texture(
             dataset_module,
@@ -114,15 +113,15 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
         for m in message.keys():
             try:
                 handler = getattr(self, self.handlers[m])
-                print handler
+                logger.debug('calling handler %s', handler)
                 handler(message[m])
             except (AttributeError, KeyError) as e:
-                msg = 'no handler for {}'.format(m)
-                print(msg, e)
+                msg = 'no handler for {}: {}'.format(m, e)
+                logger.info('%s', msg)
                 self.__return_error(msg)
             except Exception as e:
-                msg = 'no handler for {}'.format(m)
-                print(msg, e)
+                msg = 'no handler for {}: {}'.format(m, e)
+                logger.info('%s', msg)
                 self.__return_error(msg)
                 traceback.print_exc()
 
@@ -132,11 +131,6 @@ class ImageWebSocketHandler(websocket.WebSocketHandler):
 
 class ApiHandler(web.RequestHandler):
     def __init__(self, *args, **kwargs):
-        self.images = glob('{}/*.jpg'.format(FACE_DB))
-        self.asf_files = glob('{}/*.asf'.format(FACE_DB))
-        self.images.sort()
-        self.asf_files.sort()
-
         web.RequestHandler.__init__(self, *args, **kwargs)
 
     def set_default_headers(self):
@@ -144,6 +138,7 @@ class ApiHandler(web.RequestHandler):
         self.set_header("Access-Control-Allow-Headers", "x-requested-with")
         self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
         self.set_header("Content-Type", 'application/vnd.api+json')
+
 
 class FaceHandler(ApiHandler):
     @web.asynchronous
@@ -154,13 +149,13 @@ class FaceHandler(ApiHandler):
         """
         data = []
 
-        for id, filename in enumerate(self.asf_files):
+        for id, filename in enumerate(asf):
             data.append({
                 'type': 'faces',
                 'id': id,
                 'attributes': {
                     'filename': '{}/{}'.format(
-                        FACE_DB_NAME, os.path.basename(self.images[id])
+                        FACE_DB_NAME, os.path.basename(images[id])
                     ),
                 }
             })

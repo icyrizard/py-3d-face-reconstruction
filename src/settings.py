@@ -48,7 +48,6 @@ logging.config.dictConfig({
 })
 
 logger = logging.getLogger('root')
-#logger.setLevel(logging.DEBUG)
 
 if os.environ.get('DEBUG', False):
     logger = logging.getLogger('debug')
