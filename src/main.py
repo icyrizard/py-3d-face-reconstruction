@@ -111,7 +111,7 @@ def generate_call_graph(args):
         shape_model = pca.PCAModel(args.model_shape_file)
         texture_model = pca.PCAModel(args.model_texture_file)
 
-        input_points = dataset_module.IMMPoints(filename='data/imm_face_db/40-3m.asf')
+        input_points = dataset_module.IMMPoints(filename='/data/imm_face_db/40-3m.asf')
         input_image = input_points.get_image()
 
         mean_points = dataset_module.IMMPoints(points_list=shape_model.mean_values)

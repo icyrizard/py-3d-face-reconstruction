@@ -59,8 +59,8 @@ test_model:
 	$(BASE_DOCKER_CMD) python main.py \
 		--reconstruct \
 		--files `./scripts/imm_test_set.sh` \
-		--model_texture_file data/pca_imm_texture_model \
-		--model_shape_file data/pca_shape_model.npy \
+		--model_texture_file /data/pca_imm_texture_model \
+		--model_shape_file /data/pca_shape_model.npy \
 		--n_components 6
 
 show_reconstruction:
@@ -76,16 +76,16 @@ show_ibug:
 	$(BASE_DOCKER_CMD) python main.py \
 		--reconstruct \
 		--files data/imm_face_db/*.jpg\
-		--model_texture_file data/pca_ibug_texture_model.npy \
-		--model_shape_file data/pca_ibug_shape_model.npy \
+		--model_texture_file /data/pca_ibug_texture_model.npy \
+		--model_shape_file /data/pca_ibug_shape_model.npy \
 		--shape_type ibug
 
 profile_reconstruction:
 	$(BASE_DOCKER_CMD) python -m cProfile main.py \
 		--reconstruct \
 		--files data/imm_face_db/*.asf \
-		--model_texture_file data/pca_imm_texture_model.npy \
-		--model_shape_file data/pca_shape_model.npy \
+		--model_texture_file /data/pca_imm_texture_model.npy \
+		--model_shape_file /data/pca_shape_model.npy \
 		--shape_type imm \
 		--n_components 6
 
@@ -93,8 +93,8 @@ graph_reconstruction:
 	$(BASE_DOCKER_CMD) python main.py \
 		--generate_call_graph \
 		--files data/imm_face_db/*.asf \
-		--model_texture_file data/pca_imm_texture_model.npy \
-		--model_shape_file data/pca_shape_model.npy \
+		--model_texture_file /data/pca_imm_texture_model.npy \
+		--model_shape_file /data/pca_shape_model.npy \
 		--shape_type imm \
 		--n_components 6
 
