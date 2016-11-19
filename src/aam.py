@@ -199,7 +199,7 @@ def build_shape_feature_vectors(files, get_points, flattened=False):
     return points
 
 
-def sample_from_triangles(src, points2d_src, points2d_dst, triangles, dst):
+def piecewise_transform(src, points2d_src, points2d_dst, triangles, dst):
     """
     Get pixels from within the  triangles [[p1, p2, p3]_0, .. [p1, p2, p3]_n].
 
@@ -259,7 +259,7 @@ def build_texture_feature_vectors(
         # empty colored image
         dst = np.full((image.shape[0], image.shape[1], 3), fill_value=0, dtype=np.uint8)
 
-        sample_from_triangles(
+        piecewise_transform(
             image,
             Points.get_scaled_points(image.shape),
             mean_points.get_scaled_points(image.shape),

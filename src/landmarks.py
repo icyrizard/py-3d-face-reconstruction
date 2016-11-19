@@ -51,7 +51,8 @@ class Detector():
         # The 1 in the second argument indicates that we should upsample the
         # image 1 time.  This will make everything bigger and allow us to
         # detect more faces.
-        return self.detector(image, 1)
+        # 0 = no upsample
+        return self.detector(image, 0)
 
     def detect_shape(self, image):
         detections = self.detect_faces(image)

@@ -125,10 +125,11 @@ def reconstruct_texture(src_image, dst_image, texture_model,
     points2d_dst[:, 0] -= offset_x
     points2d_dst[:, 1] -= offset_y
 
-    points2d_src = points2d_src * 1.1
+    # don't know why this was, removing still works, keeping it for a while.
+    #points2d_src = points2d_src * 1.1
 
     # get the texture from the rectangles.
-    aam.sample_from_triangles(
+    aam.piecewise_transform(
         r_texture,
         points2d_dst,  # turn src and dst around
         points2d_output,  # turn src and dst around
@@ -141,7 +142,7 @@ def reconstruct_shape_texture(dataset_module, shape_model, texture_model,
                               image_filename, shape_components,
                               shape_eigenvalues_multiplier=[],
                               image_as_background=False):
-    """Reconstructs shape and texture"""
+    """Performs reconstruction for shape and texture."""
     input_points = dataset_module.factory(filename=image_filename)
     input_image = input_points.get_image()
 
