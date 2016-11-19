@@ -97,7 +97,7 @@ def reconstruct_texture(src_image, dst_image, texture_model,
     points2d_output = output_points.get_scaled_points(src_image.shape)
 
     # get the texture from the rectangles.
-    aam.sample_from_triangles(
+    aam.piecewise_transform(
         src_image,
         points2d_src,
         points2d_dst,
