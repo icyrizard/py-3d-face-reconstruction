@@ -17,9 +17,6 @@ runnit:
 	$(BASE_DOCKER_CMD) python main.py
 
 
-src/reconstruction/texture.so: src/reconstruction/texture.pyx
-	$(BASE_DOCKER_CMD) /bin/bash -c '(cd reconstruction; python setup.py build_ext --inplace)'
-
 ## IMM Dataset
 data/pca_imm_shape_model.npy:
 	$(BASE_DOCKER_CMD) python main.py \

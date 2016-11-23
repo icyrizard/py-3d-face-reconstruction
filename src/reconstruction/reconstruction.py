@@ -3,7 +3,6 @@ import numpy as np
 
 import pca
 import aam
-from utility import import_dataset_module
 
 
 def draw_shape(image, points, triangles, multiply=True):

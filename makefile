@@ -15,6 +15,7 @@ $(info $(TARGETS))
 DEPENDENCIES:= data/imm_face_db
 TARGETS:= data/shape_predictor_68_face_landmarks.dat\
 	src/reconstruction/texture.so \
+	src/reconstruction/fit.so \
 	data/pca_ibug_shape_model.npy \
 	data/pca_ibug_texture_model.npy
 
@@ -43,3 +44,5 @@ $(SITE_PACKAGES)/cv%:
 	@ls $@
 
 
+src/reconstruction/fit.so: src/reconstruction/fit-model.cpp
+	$(BASE_DOCKER_CMD) /bin/bash -c '(cd reconstruction; python setup.py build_ext --inplace)'
