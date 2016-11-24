@@ -32,6 +32,12 @@ RUN cmake ../ \
     -DPYTHON_EXECUTABLE=/usr/bin/python
 
 RUN make && make install
+
 ENV PYTHONPATH=/usr/local/eos/bin/:$PYTHONPATH
+
+WORKDIR /libs
+RUN git clone https://github.com/pybind/pybind11.git
+RUN (cd pybind11; mkdir build; cd build; cmake -DPYBIND11_PYTHON_VERSION=2.7 ..);
+RUN (cd pybind11/build; make -j4 && make install);
 
 WORKDIR /src

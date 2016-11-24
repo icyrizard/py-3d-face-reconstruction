@@ -49,8 +49,7 @@ def fit_model():
     input_points = dataset_module.factory(filename=image_filename)
     input_image = input_points.get_image()
 
-    fit.fit_model(image)
+    print(fit.add(1, 3))
 
 if __name__ == '__main__':
-    #fit_model()
-    shape()
+    fit_model()
