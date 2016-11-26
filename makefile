@@ -50,7 +50,7 @@ $(SITE_PACKAGES)/cv%:
 src/reconstruction/fit.so: src/reconstruction/fit-model.cpp
 	$(BASE_DOCKER_CMD) /bin/bash -c \
 		'(cd reconstruction; \
-			g++ -fPIC -O3 -shared -std=c++11 \
+			clang++ -fPIC -O3 -shared -std=c++14 \
 				-I/usr/local/include/pybind11/include/ \
 				-I/usr/local/eos/include/ \
 				-I/usr/local/eos/3rdparty/glm/ \
@@ -61,7 +61,7 @@ src/reconstruction/fit.so: src/reconstruction/fit-model.cpp
 				-L/usr/lib/x86_64-linux-gnu/ \
 				-L/usr/local/lib/ \
 				-lboost_program_options \
-				-lfile_system \
+				-lboost_filesystem \
 				-lopencv_world \
 				`python-config --cflags --ldflags` \
 			$(notdir $^) -o $(notdir $@) \
