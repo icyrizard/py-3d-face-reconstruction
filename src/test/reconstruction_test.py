@@ -1,4 +1,6 @@
 import cv2
+import numpy as np
+import eos
 
 import pca as pca
 from settings import logger
@@ -49,7 +51,12 @@ def fit_model():
     input_points = dataset_module.factory(filename=image_filename)
     input_image = input_points.get_image()
 
-    print(fit.add(1, 3))
+    # scale points to output image shape. We MUST do this.
+    points = input_points.get_scaled_points(input_image.shape)
+    print(input_image.shape)
+    print dir(eos)
+
+    #fit.add(input_image, points)
 
 if __name__ == '__main__':
     fit_model()
