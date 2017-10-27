@@ -12,6 +12,7 @@ import numpy as np
 import aam
 import landmarks
 from settings import logger
+from .ibug_to_bfm import ibug_mapping
 
 # load detector (this loads the datafile from disk, so needs to be done once).
 detector = landmarks.Detector()

@@ -2,6 +2,7 @@ data/*
 src/.cache/*
 src/*/.cache
 src/reconstruction/*.c
+scripts/PublicMM1/
 *.o
 *.so
 src/reconstruction/build/

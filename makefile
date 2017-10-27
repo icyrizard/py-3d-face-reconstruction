@@ -13,7 +13,7 @@ BASE_DOCKER_CMD:= docker run $(DOCKER_RUN_FLAGS) $(IMAGE_TAG)
 $(info $(TARGETS))
 
 DEPENDENCIES:= data/imm_face_db
-TARGETS:= data/shape_predictor_68_face_landmarks.dat\
+TARGETS:= data/shape_predictor_68_face_landmarks.dat \
 	src/reconstruction/texture.so \
 	src/reconstruction/fit.so \
 	data/pca_ibug_shape_model.npy \

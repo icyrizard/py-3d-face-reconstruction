@@ -131,8 +131,8 @@ def weight_face_shape(attr, alpha, n=30):
 
 def gen_random_shape_coef(attr, dim):
     alpha = np.random.randn(dim, 1)
-    alpha = age_face_shape(attr, alpha, 1)
-    alpha = gender_face_shape(attr, alpha, -5)
+    alpha = age_face_shape(attr, alpha, 10)
+    alpha = gender_face_shape(attr, alpha, 5)
     alpha = weight_face_shape(attr, alpha, -10)
 
     return alpha
@@ -140,8 +140,8 @@ def gen_random_shape_coef(attr, dim):
 
 def gen_random_tex_coef(attr, dim):
     betha = np.random.randn(dim, 1)
-    betha = age_face_tex(attr, betha, 1)
-    betha = gender_face_tex(attr, betha, -5)
+    betha = age_face_tex(attr, betha, 10)
+    betha = gender_face_tex(attr, betha, 5)
     betha = weight_face_tex(attr, betha, -10)
 
     return betha

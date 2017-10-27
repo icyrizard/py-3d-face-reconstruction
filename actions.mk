@@ -1,7 +1,7 @@
 .PHONY := train_model show_pca test_model show_reconstruction
 DEBUG_LEVEL=*
 
-data/imm_face_db: data/imm_face_db.tar.gz
+data/imm_face_db: # data/imm_face_db.tar.gz
 	(cd data; mkdir -p imm_face_db; \
 		tar -xvzf imm_face_db.tar.gz -C imm_face_db \
 	)

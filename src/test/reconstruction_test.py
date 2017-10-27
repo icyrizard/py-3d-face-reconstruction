@@ -50,13 +50,45 @@ def fit_model():
 
     input_points = dataset_module.factory(filename=image_filename)
     input_image = input_points.get_image()
+    input_points.get_points()
+
+    print dir(eos)
 
     # scale points to output image shape. We MUST do this.
     points = input_points.get_scaled_points(input_image.shape)
-    print(input_image.shape)
-    print dir(eos)
+    fit.fit(input_image, points)
 
-    #fit.add(input_image, points)
+    # fit.add(input_image, points)
+
 
 if __name__ == '__main__':
     fit_model()
+
+
+## Try seo python bindings
+#    model = eos.morphablemodel.load_model(
+#        '/usr/local/eos/share/sfm_shape_3448.bin')
+#    blend_shapes = eos.morphablemodel.load_blendshapes(
+#        '/usr/local/eos/share/expression_blendshapes_3448.bin'
+#    )
+#
+#    s = model.get_shape_model().draw_sample([1.0, -0.5, 0.7, 0.1])
+#
+#    sample = np.array(s)
+#    tri = model.get_shape_model().get_triangle_list()
+#    mean = model.get_shape_model().get_mean()
+#    dims = model.get_shape_model().get_data_dimension()
+#
+#    mean = np.array(mean)
+
+#    with open('/data/test.obj', 'w') as f:
+#        for i in range(0, len(sample), 3):
+#            f.write('v {} {} {}\n'.format(sample[i], sample[i + 1], sample[i + 2])
+#        )
+#
+#        for i in range(0, len(tri)):
+#            f.write('f {} {} {}\n'.format(
+#                tri[i][0], tri[i][1], tri[i][2],
+#            )
+#        )
+

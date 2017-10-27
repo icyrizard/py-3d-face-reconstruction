@@ -44,7 +44,7 @@ def output_shape_and_texture(shape, texture, f):
     for i in range(0, len(shape), 3):
         f.write('v {} {} {} {} {} {}\n'.format(
             shape[i], shape[i + 1], shape[i + 2],
-            int(texture[i]), int(texture[i + 1]), int(texture[i + 2])
+            texture[i], texture[i + 1], texture[i + 2]
             )
         )
 
