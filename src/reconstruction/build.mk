@@ -9,8 +9,8 @@ else
 HALIDE_LINK:=https://github.com/halide/Halide/releases/download/release_2016_04_27/halide-linux-64-gcc53-trunk-2f11b9fce62f596e832907b82d87e8f75c53dd07.tgz
 endif
 
-texture.so: src/reconstruction/texture.pyx
-	(cd src/reconstruction; python setup.py build_ext --inplace)
+src/reconstruction/texture.so: src/reconstruction/texture.pyx
+	$(BASE_DOCKER_CMD) bash -c "(cd reconstruction; python setup.py build_ext --inplace)"
 
 halide_2016_04_27.tar.gz:
 	wget -O data/halide_2016_04_27.tar.gz $(HALIDE_LINK)

@@ -1,12 +1,12 @@
 .PHONY := train_model show_pca test_model show_reconstruction
 DEBUG_LEVEL=*
 
-data/imm_face_db: # data/imm_face_db.tar.gz
+data/imm_face_db: data/imm_face_db.tar.gz
 	(cd data; mkdir -p imm_face_db; \
 		tar -xvzf imm_face_db.tar.gz -C imm_face_db \
 	)
 
-shape_predictor_68_face_landmarks.dat:
+data/shape_predictor_68_face_landmarks.dat:
 	wget http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2 -P data/
 	(cd data/; bzip2 -d shape_predictor_68_face_landmarks.dat.bz2)
 
@@ -15,7 +15,6 @@ data/imm_face_db.tar.gz:
 
 runnit:
 	$(BASE_DOCKER_CMD) python main.py
-
 
 ## IMM Dataset
 data/pca_imm_shape_model.npy:
@@ -50,7 +49,6 @@ data/pca_ibug_texture_model.npy:
 		--model_shape_file /data/pca_ibug_shape_model.npy \
 		--shape_type ibug
 ## END OF IBUG
-
 
 test_model:
 	$(BASE_DOCKER_CMD) python main.py \

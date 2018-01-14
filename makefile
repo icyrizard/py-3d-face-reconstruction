@@ -15,7 +15,7 @@ $(info $(TARGETS))
 DEPENDENCIES:= data/imm_face_db
 TARGETS:= data/shape_predictor_68_face_landmarks.dat \
 	src/reconstruction/texture.so \
-	src/reconstruction/fit.so \
+	data/imm_face_db \
 	data/pca_ibug_shape_model.npy \
 	data/pca_ibug_texture_model.npy
 
@@ -47,22 +47,22 @@ $(SITE_PACKAGES)/cv%:
 #src/reconstruction/fit.so: src/reconstruction/fit-model.cpp
 #	$(BASE_DOCKER_CMD) /bin/bash -c '(cd reconstruction; python setup.py build_ext --inplace)'
 
-src/reconstruction/fit.so: src/reconstruction/fit-model.cpp
-	$(BASE_DOCKER_CMD) /bin/bash -c \
-		'(cd reconstruction; \
-			clang++ -fPIC -O3 -shared -std=c++14 \
-				-I/usr/local/include/pybind11/include/ \
-				-I/usr/local/eos/include/ \
-				-I/usr/local/eos/3rdparty/glm/ \
-				-I/usr/local/eos/3rdparty/cereal-1.1.1/include/ \
-				-I/usr/local/include/opencv2/ \
-				-I/usr/include/boost/ \
-				-L/usr/local/eos/bin/ \
-				-L/usr/lib/x86_64-linux-gnu/ \
-				-L/usr/local/lib/ \
-				-lboost_program_options \
-				-lboost_filesystem \
-				-lopencv_world \
-				`python-config --cflags --ldflags` \
-			$(notdir $^) -o $(notdir $@) \
-		)'
+#src/reconstruction/fit.so: src/reconstruction/fit-model.cpp
+#	$(BASE_DOCKER_CMD) /bin/bash -c \
+#		'(cd reconstruction; \
+#			clang++ -fPIC -O3 -shared -std=c++14 \
+#				-I/usr/local/include/pybind11/include/ \
+#				-I/usr/local/eos/include/ \
+#				-I/usr/local/eos/3rdparty/glm/ \
+#				-I/usr/local/eos/3rdparty/cereal-1.1.1/include/ \
+#				-I/usr/local/include/opencv2/ \
+#				-I/usr/include/boost/ \
+#				-L/usr/local/eos/bin/ \
+#				-L/usr/lib/x86_64-linux-gnu/ \
+#				-L/usr/local/lib/ \
+#				-lboost_program_options \
+#				-lboost_filesystem \
+#				-lopencv_world \
+#				`python-config --cflags --ldflags` \
+#			$(notdir $^) -o $(notdir $@) \
+#		)'
