@@ -44,9 +44,9 @@ $(SITE_PACKAGES)/cv%:
 	@ls $@
 
 
+# Used for when using EOS library. This is not yet needed.
 #src/reconstruction/fit.so: src/reconstruction/fit-model.cpp
 #	$(BASE_DOCKER_CMD) /bin/bash -c '(cd reconstruction; python setup.py build_ext --inplace)'
-
 #src/reconstruction/fit.so: src/reconstruction/fit-model.cpp
 #	$(BASE_DOCKER_CMD) /bin/bash -c \
 #		'(cd reconstruction; \
