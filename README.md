@@ -2,10 +2,12 @@
 This tool is meant to as a pipeline to show 2D and 3D reconstructions using An
 Active Appearance Model and a 2D or 3D model to rebuild the face. Face
 reconstruction is a difficult subject but like with everything, if you
-understand the steps, it's actually ok. This small library, can give you a
-feeling what is needed to solve this problem, but also some quick-and-dirty
+understand the steps, it's actually ok. 
+
+This small library, can give you a feeling what is needed to solve this problem, but also some quick-and-dirty
 tricks are used. Like using dlib to solve landmark detection, instead of
 estimating them using a more traditional way by as done by [[Coots|coots]].
+
 Instead, dlib uses a sophistaticated approach to estimate 2D landmarks. This
 capability is re-used to find the PCA parameters needed to rebuild a person's
 face.
